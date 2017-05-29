@@ -113,7 +113,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private CordovaPlugin activityResultCallback = null;
     private ImageView imageView;
     private View errorView;
-    private NotificationFlag stopReadingPassportFlag;
+    //private NotificationFlag stopReadingPassportFlag;
     private DeviceWrapper barcodeReaderDevice;
     private PassportScanner passportScanner;
     //private EscPosPrinter escPosPrinter;
@@ -812,6 +812,34 @@ public class PassportScannerPlugin extends CordovaPlugin {
             // IN transfer requires client to pass the length to receive.
             return new byte[params.optInt("length")];
         }
+    }
+
+
+
+    public class NotificationFlag {
+        private boolean value;
+
+        public NotificationFlag() {
+            value = false;
+        }
+
+        public boolean isSet() {
+            return value;
+        }
+
+        public void set() {
+            this.value = true;
+        }
+
+        public void reset() {
+            this.value = false;
+        }
+
+        @Override
+        public String toString() {
+            return "NotificationFlag:" + (isSet() ? "ON" : "OFF");
+        }
+
     }
 
 }
