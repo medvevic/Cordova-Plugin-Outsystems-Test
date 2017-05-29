@@ -971,7 +971,7 @@ public static class DeviceFinder {
         if (devices == null)
             return;
         this.devices = devices;
-
+/*
         if (!EnvironmentHelper.getInstance().isMerchantDevice()) {
             // Find bluetooth devices
             try {
@@ -991,7 +991,7 @@ public static class DeviceFinder {
             } catch (Throwable e) {
             }
         }
-
+*/
         // Find USB devices
         try {
             usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
