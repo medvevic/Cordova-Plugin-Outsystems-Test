@@ -1,22 +1,3 @@
-/*
-       Licensed to the Apache Software Foundation (ASF) under one
-       or more contributor license agreements.  See the NOTICE file
-       distributed with this work for additional information
-       regarding copyright ownership.  The ASF licenses this file
-       to you under the Apache License, Version 2.0 (the
-       "License"); you may not use this file except in compliance
-       with the License.  You may obtain a copy of the License at
-
-         http://www.apache.org/licenses/LICENSE-2.0
-
-       Unless required by applicable law or agreed to in writing,
-       software distributed under the License is distributed on an
-       "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-       KIND, either express or implied.  See the License for the
-       specific language governing permissions and limitations
-       under the License.
-*/
-
 package org.apache.cordova.passportscanner;
 
 import org.apache.cordova.CallbackContext;
@@ -33,12 +14,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParser;
 
+import android.annotation.TargetApi;
 import android.app.PendingIntent;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.hardware.input.InputManager;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -46,7 +31,9 @@ import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbRequest;
+import android.os.Build;
 import android.util.Base64;
+import android.view.InputDevice;
 import android.view.View;
 import android.webkit.DownloadListener;
 import android.widget.ImageView;
@@ -59,6 +46,7 @@ import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import android.util.Log;
@@ -66,17 +54,6 @@ import android.util.Log;
 public class PassportScannerPlugin extends CordovaPlugin {
 
     private static final String TAG = "PassportScannerPlugin";
-
-/*
-    //private static final String TAG = "PassportScannerPlugin";
-    private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
-    private static final String ACTION_OPEN = "openSerial";
-    private static final String ACTION_READ = "readSerial";
-    private static final String ACTION_WRITE = "writeSerial";
-    private static final String ACTION_WRITE_HEX = "writeSerialHex";
-    private static final String ACTION_CLOSE = "closeSerial";
-    private static final String ACTION_READ_CALLBACK = "registerReadCallback";
-*/
 
     // The current driver that handle the serial port
     //private UsbSerialDriver driver;
@@ -114,7 +91,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private ImageView imageView;
     private View errorView;
     //private NotificationFlag stopReadingPassportFlag;
-    private DeviceWrapper barcodeReaderDevice;
+    //private DeviceWrapper barcodeReaderDevice;
     private PassportScanner passportScanner;
     //private EscPosPrinter escPosPrinter;
     //private RegoPrinter contextRegoPrinter; // [VM]
@@ -265,7 +242,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
     }
 
     private void findDevices() {
-        barcodeReaderDevice = DeviceWrapper.forBarcodeReader();
+        DeviceWrapper dw = new DeviceWrapper();
+        DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
         new DeviceFinder(new DeviceFinder.EventListener() {
             @Override
             public void onDeviceFound(DeviceWrapper device) {
@@ -287,8 +265,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     tscPrinter.setMacAddress(device.getBluetoothAddress());
                 }
             }
-        }).find(this.cordova.getActivity().getApplicationContext(), barcodeReaderDevice, DeviceWrapper.forPassportScannerNew(),
-                DeviceWrapper.forPassportScanner(), DeviceWrapper.forReceiptPrinter(), DeviceWrapper.forBluetoothPrinterTSC());
+        }).find(this.cordova.getActivity().getApplicationContext(), barcodeReaderDevice, dw.forPassportScannerNew(),
+                dw.forPassportScanner(), dw.forReceiptPrinter(), dw.forBluetoothPrinterTSC());
         // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
     }
 
@@ -815,7 +793,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     }
 
 
-
+//--------------------------------------------------------------------------------------------------
     public class NotificationFlag {
         private boolean value;
 
@@ -841,5 +819,297 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
 
     }
+
+//--------------------------------------------------------------------------------------------------
+public class DeviceWrapper {
+
+
+    public static final String BARCODE_READER = "BarcodeReader";
+    public static final String PASSPORT_SCANNER = "PassportScanner";
+    public static final String RECEIPT_PRINTER = "ReceiptPrinter";
+    public static final String RECEIPT_PRINTER_BLUETOOTH_REGO_NAME = "RG-MLP58A";
+    public static final String RECEIPT_PRINTER_BLUETOOTH_REGO_ADDRESS = "00:02:5B:B3:D8:21";
+    //public static final String RECEIPT_PRINTER_BLUETOOTH_TSC_NAME = "Alpha-3R";
+    public static final String RECEIPT_PRINTER_BLUETOOTH_TSC_NAME = "BT-SPP";
+
+    public DeviceWrapper forBarcodeReader() {
+        return new DeviceWrapper(BARCODE_READER, 0x05E0, 0x1200); // 1504, 4608
+    }
+
+    public DeviceWrapper forPassportScanner() {
+        return new DeviceWrapper(PASSPORT_SCANNER, 0xFFFF, 5);
+    }
+
+    public DeviceWrapper forPassportScannerNew() {
+        return new DeviceWrapper(PASSPORT_SCANNER, 0x2B78, 5);
+    }
+
+    public DeviceWrapper forReceiptPrinter() {
+        return new DeviceWrapper(RECEIPT_PRINTER, 1003, 8204);
+    }
+
+    public DeviceWrapper forBluetoothPrinterREGO() {
+        return new DeviceWrapper(RECEIPT_PRINTER_BLUETOOTH_REGO_NAME);
+    }
+
+    public DeviceWrapper forBluetoothPrinterTSC() {
+        return new DeviceWrapper(RECEIPT_PRINTER_BLUETOOTH_TSC_NAME);
+    }
+
+    public DeviceWrapper(String name, int vendorId, int productId) {
+        setName(name);
+        setVendorId(vendorId);
+        setProductId(productId);
+    }
+
+    public DeviceWrapper(String name) {
+        setName(name);
+    }
+
+    public DeviceWrapper() {
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getVendorId() {
+        return vendorId;
+    }
+
+    public void setVendorId(int vendorId) {
+        this.vendorId = vendorId;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public String getBluetoothAddress() {
+        return btAddress;
+    }
+
+    public void setBluetoothAddress(String btAddress) {
+        this.btAddress = btAddress;
+    }
+
+    public BluetoothDevice getBluetoothDevice() {
+        return bluetoothDevice;
+    }
+
+    public void setBluetoothDevice(BluetoothDevice bluetoothDevice) {
+        this.bluetoothDevice = bluetoothDevice;
+    }
+
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
+
+    public InputDevice getInputDevice() {
+        return inputDevice;
+    }
+
+    public void setInputDevice(InputDevice inputDevice) {
+        this.inputDevice = inputDevice;
+    }
+
+    public UsbDevice getUsbDevice() {
+        return usbDevice;
+    }
+
+    public void setUsbDevice(UsbDevice usbDevice) {
+        this.usbDevice = usbDevice;
+    }
+
+    public UsbDeviceConnection getUsbConnection() {
+        return usbConnection;
+    }
+
+    public void setUsbConnection(UsbDeviceConnection usbConnection) {
+        this.usbConnection = usbConnection;
+    }
+
+    public boolean hasDevice() {
+        return inputDevice != null || usbDevice != null || bluetoothDevice != null;
+    }
+
+    public void closeUsbConnection() {
+        if (usbConnection != null) {
+            usbConnection.close();
+            usbConnection = null;
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        closeUsbConnection();
+        super.finalize();
+    }
+
+    private String name;
+    private int vendorId;
+    private int productId;
+    private InputDevice inputDevice;
+    private UsbDevice usbDevice;
+    private UsbDeviceConnection usbConnection;
+    private BluetoothDevice bluetoothDevice;
+    private String btAddress;
+
+}
+
+//--------------------------------------------------------------------------------------------------
+public static class DeviceFinder {
+
+    public interface EventListener {
+        void onDeviceFound(DeviceWrapper device);
+    }
+
+    public DeviceFinder(final DeviceFinder.EventListener listener) {
+        this.listener = listener;
+    }
+
+    public void find(final Context context, DeviceWrapper... devices) {
+        if (devices == null)
+            return;
+        this.devices = devices;
+
+        if (!EnvironmentHelper.getInstance().isMerchantDevice()) {
+            // Find bluetooth devices
+            try {
+                BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+                // Phone does not support Bluetooth
+                if (btAdapter != null) {
+                    Set<BluetoothDevice> pairedDevices = btAdapter.getBondedDevices();
+                    if (pairedDevices.size() > 0) {
+                        for (BluetoothDevice device : pairedDevices) {
+                            DeviceWrapper dev = findDevice(device);
+                            if (dev != null) {
+                                listener.onDeviceFound(dev);
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable e) {
+            }
+        }
+
+        // Find USB devices
+        try {
+            usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+            if(usbManager != null) {
+                context.registerReceiver(receiver, new IntentFilter(ACTION_USB_PERMISSION));
+                PendingIntent intent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+                for (final UsbDevice device : usbManager.getDeviceList().values()) {
+                    DeviceWrapper dev = findDevice(device);
+                    if (dev != null) {
+                        usbManager.requestPermission(device, intent);
+                    }
+                }
+            }
+        } catch (Throwable e) {
+        }
+
+        // Find HID devices, which are among inputs
+        try {
+            InputManager inputManager = (InputManager) context.getSystemService(Context.INPUT_SERVICE);
+            if (inputManager != null) {
+                for (int id : inputManager.getInputDeviceIds()) {
+                    if (id > 0) {
+                        DeviceWrapper dev = findDevice(inputManager.getInputDevice(id));
+                        if (dev != null) {
+                            listener.onDeviceFound(dev);
+                        }
+                    }
+                }
+            }
+        } catch (Throwable e) {
+        }
+    }
+
+    private static final String ACTION_USB_PERMISSION = "net.etaxfree.refund.helpers.USB_PERMISSION";
+
+    private UsbManager usbManager;
+    private DeviceWrapper[] devices;
+    private DeviceFinder.EventListener listener;
+
+    final BroadcastReceiver receiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (ACTION_USB_PERMISSION.equals(action)) {
+                synchronized (this) {
+                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                        DeviceWrapper device = findDevice((UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE));
+                        if (device != null) {
+                            device.setUsbConnection(usbManager.openDevice(device.getUsbDevice()));
+                            listener.onDeviceFound(device);
+                        }
+                    }
+                }
+            } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+                DeviceWrapper device = findDevice((UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE));
+                if (device != null && device.getUsbConnection() != null) {
+                    device.getUsbConnection().close();
+                    device.setUsbConnection(null);
+                }
+            }
+        }
+    };
+
+    private DeviceWrapper findDevice(UsbDevice device) {
+        if (device == null) {
+            return null;
+        }
+        DeviceWrapper res = findDevice(device.getVendorId(), device.getProductId());
+        if (res != null) {
+            res.setUsbDevice(device);
+        }
+        return res;
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    private DeviceWrapper findDevice(InputDevice device) {
+        if (device == null) {
+            return null;
+        }
+        DeviceWrapper res = findDevice(device.getVendorId(), device.getProductId());
+        if (res != null) {
+            res.setInputDevice(device);
+        }
+        return res;
+    }
+
+    private DeviceWrapper findDevice(int vendorId, int productId) {
+        if (devices == null || vendorId <= 0 || productId <= 0) {
+            return null;
+        }
+        for(DeviceWrapper dev : this.devices) {
+            if (dev.getVendorId() == vendorId && dev.getProductId() == productId) {
+                return dev;
+            }
+        }
+        return null;
+    }
+
+    private DeviceWrapper findDevice(BluetoothDevice device) {
+        if (device == null || device.getName() == null) {
+            return null;
+        }
+
+        for(DeviceWrapper dev : this.devices) {
+            if (device.getName().equals(dev.getName())) {
+                dev.setBluetoothDevice(device);
+                dev.setBluetoothAddress(device.getAddress());
+                return dev;
+            }
+        }
+        return null;
+    }
+
+}
+
 
 }
