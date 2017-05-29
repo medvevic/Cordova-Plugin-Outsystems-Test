@@ -89,7 +89,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private CordovaPlugin activityResultCallback = null;
     private ImageView imageView;
     private View errorView;
-    private PassportScanner passportScanner;
+    //private PassportScanner passportScanner;
     private TscPrinter tscPrinter;
     private String lastUrl;
 
@@ -247,7 +247,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                     //addUserAgent(UrlHelper.UA_BARCODE_READER);
                 } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
-                    passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
+                    //passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
                     //addUserAgent(UrlHelper.UA_PASSPORT_READER);
                 } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
                     // TODO: there must be separate printer for sticker
@@ -1107,6 +1107,7 @@ public static class DeviceFinder {
 }
 
 //--------------------------------------------------------------------------------------------------
+/*
 public class PassportScanner extends UsbSerialDevice {
 
 
@@ -1357,7 +1358,7 @@ public class PassportScanner extends UsbSerialDevice {
 
 
 }
-
+*/
 
 
 }
