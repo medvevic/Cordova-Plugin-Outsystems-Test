@@ -90,7 +90,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private ImageView imageView;
     private View errorView;
     //private PassportScanner passportScanner;
-    private TscPrinter tscPrinter;
+    //private TscPrinter tscPrinter;
     private String lastUrl;
 
     //------------------------------- New for work from Outsystems
@@ -256,8 +256,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     //contextRegoPrinter = new RegoPrinter(getApplicationContext());
                     //contextRegoPrinter.setPort(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_REGO_ADDRESS);
                 } else if (device.getName().equals(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_TSC_NAME)) {
-                    tscPrinter = new TscPrinter();
-                    tscPrinter.setMacAddress(device.getBluetoothAddress());
+                    //tscPrinter = new TscPrinter();
+                    //tscPrinter.setMacAddress(device.getBluetoothAddress());
                 }
             }
         }).find(this.cordova.getActivity().getApplicationContext(), barcodeReaderDevice, dw.forPassportScannerNew(),
