@@ -27,7 +27,10 @@
 
       <config-file target="res/xml/config.xml" parent="/*">
           <feature name="PassportScannerPlugin">
-              <param name="android-package" value="nl.xservices.plugins.PassportScannerPlugin" />
+              <!-- <param name="android-package" value="nl.xservices.plugins.PassportScannerPlugin" /> -->
+		  
+		  <!-- C:\CordovaWork\Outsystems\src\org\apache\cordova\passportscanner -->
+              <param name="android-package" value="org.apache.cordova.passportscanner.PassportScannerPlugin" />
           </feature>
       </config-file>
 
@@ -37,8 +40,8 @@
           <uses-sdk android:minSdkVersion="12" android:targetSdkVersion="21" />
       </config-file>
 
-      <source-file src="src/android/nl/xservices/plugins/PassportScannerPlugin.java" target-dir="src/nl/xservices/plugins" />
-      <!-- <source-file src="src/org/apache/cordova/passportscanner/PassportScannerPlugin.java" target-dir="src/org/apache/cordova/passportscanner" /> -->
+      <!-- <source-file src="src/android/nl/xservices/plugins/PassportScannerPlugin.java" target-dir="src/nl/xservices/plugins" /> -->
+      <source-file src="src/org/apache/cordova/passportscanner/PassportScannerPlugin.java" target-dir="src/org/apache/cordova/passportscanner" />
 
       <dependency id="cordova-plugin-compat" version="^1.0.0" />
 
