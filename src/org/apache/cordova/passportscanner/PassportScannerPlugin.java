@@ -51,10 +51,11 @@ import android.view.View;
 import android.webkit.DownloadListener;
 import android.widget.ImageView;
 
+/*
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
-
+*/
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -78,9 +79,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
 */
 
     // The current driver that handle the serial port
-    private UsbSerialDriver driver;
+    //private UsbSerialDriver driver;
     // The serial port that will be used in this plugin
-    private UsbSerialPort port;
+    //private UsbSerialPort port;
     // Read buffer, and read params
     private static final int READ_WAIT_MILLIS = 200;
     private static final int BUFSIZ = 4096;
@@ -99,7 +100,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     // I/O manager to handle new incoming serial data
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-    private SerialInputOutputManager mSerialIoManager;
+    //private SerialInputOutputManager mSerialIoManager;
 
 
     //private UsbSerialDevice
@@ -198,9 +199,21 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
 
         try {
+
             if ("hasUsbHostFeature".equals(action)) {
                 boolean usbHostFeature = cordova.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, usbHostFeature));
+                return true;
+            } else if ("findDevices".equals(action)) {
+                cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        try {
+                            findDevices();
+                        } catch (Exception e) {
+                            callbackContext.error(e.getMessage());
+                        }
+                    }
+                });
                 return true;
             } else if ("getDevices".equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
@@ -238,6 +251,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 releaseInterface(args, params, callbackContext);
                 return true;
             }
+
+
         } catch (UsbError e) {
             callbackContext.error(e.getMessage());
             return true;
