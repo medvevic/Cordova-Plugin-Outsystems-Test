@@ -147,8 +147,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 boolean usbHostFeature = cordova.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, usbHostFeature));
                 return true;
-            //} else if (action.equals(ACTION_AVAILABLE)) {
-            } else if ("available".equals(action)) {
+            } else if (action.equals(ACTION_AVAILABLE)) {
+            //} else if ("available".equals(action)) {
                 openCallbackContext.success(1);
                 return true;
 
@@ -159,8 +159,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
-                            //openCallbackContext.success("findDevices");
-                            findDevices();
+                            int isFound = findDevices() == true ? 1 : 0;
+                            openCallbackContext.success(isFound);
                         } catch (Exception e) {
                             openCallbackContext.error(e.getMessage());
                         }
@@ -220,34 +220,48 @@ public class PassportScannerPlugin extends CordovaPlugin {
         return false;
     }
 
-    private void findDevices() {
-        DeviceWrapper dw = new DeviceWrapper();
-        DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
-        new DeviceFinder(new DeviceFinder.EventListener() {
-            @Override
-            public void onDeviceFound(DeviceWrapper device) {
-                String name = device.getName();
+    private boolean findDevices() {
+        try {
+            DeviceWrapper dw = new DeviceWrapper();
+            DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
+            new DeviceFinder(new DeviceFinder.EventListener() {
+                @Override
+                public void onDeviceFound(DeviceWrapper device) {
+                    String name = device.getName();
 
-                if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
-                    //addUserAgent(UrlHelper.UA_BARCODE_READER);
-                } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
-                    //passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
-                    //addUserAgent(UrlHelper.UA_PASSPORT_READER);
-                } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
-                    // TODO: there must be separate printer for sticker
-                    //escPosPrinter = new EscPosPrinter(device.getUsbDevice(), device.getUsbConnection(), 58);
-                } else if (device.getName().equals(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_REGO_NAME)) {
-                    //contextRegoPrinter = new RegoPrinter(getApplicationContext());
-                    //contextRegoPrinter.setPort(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_REGO_ADDRESS);
-                } else if (device.getName().equals(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_TSC_NAME)) {
-                    //tscPrinter = new TscPrinter();
-                    //tscPrinter.setMacAddress(device.getBluetoothAddress());
+                    if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
+                        //addUserAgent(UrlHelper.UA_BARCODE_READER);
+                    } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
+                        //passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
+                        //addUserAgent(UrlHelper.UA_PASSPORT_READER);
+                    } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
+                        // TODO: there must be separate printer for sticker
+                        //escPosPrinter = new EscPosPrinter(device.getUsbDevice(), device.getUsbConnection(), 58);
+                    } else if (device.getName().equals(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_REGO_NAME)) {
+                        //contextRegoPrinter = new RegoPrinter(getApplicationContext());
+                        //contextRegoPrinter.setPort(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_REGO_ADDRESS);
+                    } else if (device.getName().equals(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_TSC_NAME)) {
+                        //tscPrinter = new TscPrinter();
+                        //tscPrinter.setMacAddress(device.getBluetoothAddress());
+                    }
                 }
-            }
-        }).find(this.cordova.getActivity().getApplicationContext(), barcodeReaderDevice, dw.forPassportScannerNew(),
-                dw.forPassportScanner(), dw.forReceiptPrinter(), dw.forBluetoothPrinterTSC());
-        // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
+            }).find(this.cordova.getActivity().getApplicationContext(), barcodeReaderDevice, dw.forPassportScannerNew(),
+                    dw.forPassportScanner(), dw.forReceiptPrinter(), dw.forBluetoothPrinterTSC());
+            // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
+        }
+        catch (Throwable e) {
+            return false;
+        }
+        return true;
     }
+
+
+
+
+
+
+
+//--------------------------------------------------------------------------------------------------
 
     private boolean filterDevice(UsbDevice device, JSONArray filters) throws JSONException {
         if (filters == null) {
@@ -297,14 +311,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
         return false;
     }
-
-
-
-
-
-
-
-//--------------------------------------------------------------------------------------------------
 
     // Used when instantiated via reflection by PluginManager
     public PassportScannerPlugin() {
