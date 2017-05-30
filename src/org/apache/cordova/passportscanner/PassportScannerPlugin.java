@@ -180,8 +180,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
-                            findDevices();
                             callbackContext.success("findDevices");
+                            findDevices();
                         } catch (Exception e) {
                             callbackContext.error(e.getMessage());
                         }
