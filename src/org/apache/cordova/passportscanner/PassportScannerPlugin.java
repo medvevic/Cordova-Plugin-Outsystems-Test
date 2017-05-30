@@ -23,11 +23,6 @@ import android.view.InputDevice;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.hoho.android.usbserial.driver.CdcAcmSerialDriver;
-import com.hoho.android.usbserial.driver.UsbSerialDriver;
-import com.hoho.android.usbserial.driver.UsbSerialPort;
-import com.hoho.android.usbserial.util.SerialInputOutputManager;
-
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaPlugin;
@@ -40,7 +35,11 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -1383,6 +1382,943 @@ public class PassportScanner extends UsbSerialDevice {
     } // class PassportScanner
 
 //--------------------------------------------------------------------------------------------------
+public final class UsbId {
+
+    public static final int VENDOR_FTDI = 0x0403;
+    public static final int FTDI_FT232R = 0x6001;
+    public static final int FTDI_FT231X = 0x6015;
+
+    public static final int VENDOR_ATMEL = 0x03EB;
+    public static final int ATMEL_LUFA_CDC_DEMO_APP = 0x2044;
+
+    public static final int VENDOR_ARDUINO = 0x2341;
+    public static final int ARDUINO_UNO = 0x0001;
+    public static final int ARDUINO_MEGA_2560 = 0x0010;
+    public static final int ARDUINO_SERIAL_ADAPTER = 0x003b;
+    public static final int ARDUINO_MEGA_ADK = 0x003f;
+    public static final int ARDUINO_MEGA_2560_R3 = 0x0042;
+    public static final int ARDUINO_UNO_R3 = 0x0043;
+    public static final int ARDUINO_MEGA_ADK_R3 = 0x0044;
+    public static final int ARDUINO_SERIAL_ADAPTER_R3 = 0x0044;
+    public static final int ARDUINO_LEONARDO = 0x8036;
+    public static final int ARDUINO_MICRO = 0x8037;
+
+    public static final int VENDOR_VAN_OOIJEN_TECH = 0x16c0;
+    public static final int VAN_OOIJEN_TECH_TEENSYDUINO_SERIAL = 0x0483;
+
+    public static final int VENDOR_LEAFLABS = 0x1eaf;
+    public static final int LEAFLABS_MAPLE = 0x0004;
+
+    public static final int VENDOR_SILABS = 0x10c4;
+    public static final int SILABS_CP2102 = 0xea60;
+    public static final int SILABS_CP2105 = 0xea70;
+    public static final int SILABS_CP2108 = 0xea71;
+    public static final int SILABS_CP2110 = 0xea80;
+
+    public static final int VENDOR_PROLIFIC = 0x067b;
+    public static final int PROLIFIC_PL2303 = 0x2303;
+
+    public static final int VENDOR_QINHENG = 0x1a86;
+    public static final int QINHENG_HL340 = 0x7523;
+
+    private UsbId() {
+        throw new IllegalAccessError("Non-instantiable class.");
+    }
+
+}
+
+
+    public interface UsbSerialPort {
+
+        /** 5 data bits. */
+        public static final int DATABITS_5 = 5;
+
+        /** 6 data bits. */
+        public static final int DATABITS_6 = 6;
+
+        /** 7 data bits. */
+        public static final int DATABITS_7 = 7;
+
+        /** 8 data bits. */
+        public static final int DATABITS_8 = 8;
+
+        /** No flow control. */
+        public static final int FLOWCONTROL_NONE = 0;
+
+        /** RTS/CTS input flow control. */
+        public static final int FLOWCONTROL_RTSCTS_IN = 1;
+
+        /** RTS/CTS output flow control. */
+        public static final int FLOWCONTROL_RTSCTS_OUT = 2;
+
+        /** XON/XOFF input flow control. */
+        public static final int FLOWCONTROL_XONXOFF_IN = 4;
+
+        /** XON/XOFF output flow control. */
+        public static final int FLOWCONTROL_XONXOFF_OUT = 8;
+
+        /** No parity. */
+        public static final int PARITY_NONE = 0;
+
+        /** Odd parity. */
+        public static final int PARITY_ODD = 1;
+
+        /** Even parity. */
+        public static final int PARITY_EVEN = 2;
+
+        /** Mark parity. */
+        public static final int PARITY_MARK = 3;
+
+        /** Space parity. */
+        public static final int PARITY_SPACE = 4;
+
+        /** 1 stop bit. */
+        public static final int STOPBITS_1 = 1;
+
+        /** 1.5 stop bits. */
+        public static final int STOPBITS_1_5 = 3;
+
+        /** 2 stop bits. */
+        public static final int STOPBITS_2 = 2;
+
+        public UsbSerialDriver getDriver();
+
+        /**
+         * Port number within driver.
+         */
+        public int getPortNumber();
+
+        /**
+         * The serial number of the underlying UsbDeviceConnection, or {@code null}.
+         */
+        public String getSerial();
+
+        /**
+         * Opens and initializes the port. Upon success, caller must ensure that
+         * {@link #close()} is eventually called.
+         *
+         * @param connection an open device connection, acquired with
+         *            {@link UsbManager#openDevice(android.hardware.usb.UsbDevice)}
+         * @throws IOException on error opening or initializing the port.
+         */
+        public void open(UsbDeviceConnection connection) throws IOException;
+
+        /**
+         * Closes the port.
+         *
+         * @throws IOException on error closing the port.
+         */
+        public void close() throws IOException;
+
+        /**
+         * Reads as many bytes as possible into the destination buffer.
+         *
+         * @param dest the destination byte buffer
+         * @param timeoutMillis the timeout for reading
+         * @return the actual number of bytes read
+         * @throws IOException if an error occurred during reading
+         */
+        public int read(final byte[] dest, final int timeoutMillis) throws IOException;
+
+        /**
+         * Writes as many bytes as possible from the source buffer.
+         *
+         * @param src the source byte buffer
+         * @param timeoutMillis the timeout for writing
+         * @return the actual number of bytes written
+         * @throws IOException if an error occurred during writing
+         */
+        public int write(final byte[] src, final int timeoutMillis) throws IOException;
+
+        /**
+         * Sets various serial port parameters.
+         *
+         * @param baudRate baud rate as an integer, for example {@code 115200}.
+         * @param dataBits one of {@link #DATABITS_5}, {@link #DATABITS_6},
+         *            {@link #DATABITS_7}, or {@link #DATABITS_8}.
+         * @param stopBits one of {@link #STOPBITS_1}, {@link #STOPBITS_1_5}, or
+         *            {@link #STOPBITS_2}.
+         * @param parity one of {@link #PARITY_NONE}, {@link #PARITY_ODD},
+         *            {@link #PARITY_EVEN}, {@link #PARITY_MARK}, or
+         *            {@link #PARITY_SPACE}.
+         * @throws IOException on error setting the port parameters
+         */
+        public void setParameters(
+                int baudRate, int dataBits, int stopBits, int parity) throws IOException;
+
+        /**
+         * Gets the CD (Carrier Detect) bit from the underlying UART.
+         *
+         * @return the current state, or {@code false} if not supported.
+         * @throws IOException if an error occurred during reading
+         */
+        public boolean getCD() throws IOException;
+
+        /**
+         * Gets the CTS (Clear To Send) bit from the underlying UART.
+         *
+         * @return the current state, or {@code false} if not supported.
+         * @throws IOException if an error occurred during reading
+         */
+        public boolean getCTS() throws IOException;
+
+        /**
+         * Gets the DSR (Data Set Ready) bit from the underlying UART.
+         *
+         * @return the current state, or {@code false} if not supported.
+         * @throws IOException if an error occurred during reading
+         */
+        public boolean getDSR() throws IOException;
+
+        /**
+         * Gets the DTR (Data Terminal Ready) bit from the underlying UART.
+         *
+         * @return the current state, or {@code false} if not supported.
+         * @throws IOException if an error occurred during reading
+         */
+        public boolean getDTR() throws IOException;
+
+        /**
+         * Sets the DTR (Data Terminal Ready) bit on the underlying UART, if
+         * supported.
+         *
+         * @param value the value to set
+         * @throws IOException if an error occurred during writing
+         */
+        public void setDTR(boolean value) throws IOException;
+
+        /**
+         * Gets the RI (Ring Indicator) bit from the underlying UART.
+         *
+         * @return the current state, or {@code false} if not supported.
+         * @throws IOException if an error occurred during reading
+         */
+        public boolean getRI() throws IOException;
+
+        /**
+         * Gets the RTS (Request To Send) bit from the underlying UART.
+         *
+         * @return the current state, or {@code false} if not supported.
+         * @throws IOException if an error occurred during reading
+         */
+        public boolean getRTS() throws IOException;
+
+        /**
+         * Sets the RTS (Request To Send) bit on the underlying UART, if
+         * supported.
+         *
+         * @param value the value to set
+         * @throws IOException if an error occurred during writing
+         */
+        public void setRTS(boolean value) throws IOException;
+
+        /**
+         * Flush non-transmitted output data and / or non-read input data
+         * @param flushRX {@code true} to flush non-transmitted output data
+         * @param flushTX {@code true} to flush non-read input data
+         * @return {@code true} if the operation was successful, or
+         * {@code false} if the operation is not supported by the driver or device
+         * @throws IOException if an error occurred during flush
+         */
+        public boolean purgeHwBuffers(boolean flushRX, boolean flushTX) throws IOException;
+
+    }
+
+    public interface UsbSerialDriver {
+
+        /**
+         * Returns the raw {@link UsbDevice} backing this port.
+         *
+         * @return the device
+         */
+        public UsbDevice getDevice();
+
+        /**
+         * Returns all available ports for this device. This list must have at least
+         * one entry.
+         *
+         * @return the ports
+         */
+        public List<UsbSerialPort> getPorts();
+    }
+
+    public static class SerialInputOutputManager implements Runnable {
+
+        private final String TAG = SerialInputOutputManager.class.getSimpleName();
+        private static final boolean DEBUG = true;
+
+        private static final int READ_WAIT_MILLIS = 200;
+        private static final int BUFSIZ = 4096;
+
+        private final UsbSerialPort mDriver;
+
+        private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFSIZ);
+
+        // Synchronized by 'mWriteBuffer'
+        private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(BUFSIZ);
+
+        private enum State {
+            STOPPED,
+            RUNNING,
+            STOPPING
+        }
+
+        // Synchronized by 'this'
+        private State mState = State.STOPPED;
+
+        // Synchronized by 'this'
+        private Listener mListener;
+
+        public interface Listener {
+            /**
+             * Called when new incoming data is available.
+             */
+            public void onNewData(byte[] data);
+
+            /**
+             * Called when {@link SerialInputOutputManager#run()} aborts due to an
+             * error.
+             */
+            public void onRunError(Exception e);
+        }
+
+        /**
+         * Creates a new instance with no listener.
+         */
+        public SerialInputOutputManager(UsbSerialPort driver) {
+            this(driver, null);
+        }
+
+        /**
+         * Creates a new instance with the provided listener.
+         */
+        public SerialInputOutputManager(UsbSerialPort driver, Listener listener) {
+            mDriver = driver;
+            mListener = listener;
+        }
+
+        public synchronized void setListener(Listener listener) {
+            mListener = listener;
+        }
+
+        public synchronized Listener getListener() {
+            return mListener;
+        }
+
+        public void writeAsync(byte[] data) {
+            synchronized (mWriteBuffer) {
+                mWriteBuffer.put(data);
+            }
+        }
+
+        public synchronized void stop() {
+            if (getState() == State.RUNNING) {
+                Log.i(TAG, "Stop requested");
+                mState = State.STOPPING;
+            }
+        }
+
+        private synchronized State getState() {
+            return mState;
+        }
+
+        /**
+         * Continuously services the read and write buffers until {@link #stop()} is
+         * called, or until a driver exception is raised.
+         *
+         * NOTE(mikey): Uses inefficient read/write-with-timeout.
+         * TODO(mikey): Read asynchronously with {@link UsbRequest#queue(ByteBuffer, int)}
+         */
+        @Override
+        public void run() {
+            synchronized (this) {
+                if (getState() != State.STOPPED) {
+                    throw new IllegalStateException("Already running.");
+                }
+                mState = State.RUNNING;
+            }
+
+            Log.i(TAG, "Running ..");
+            try {
+                while (true) {
+                    if (getState() != State.RUNNING) {
+                        Log.i(TAG, "Stopping mState=" + getState());
+                        break;
+                    }
+                    step();
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Run ending due to exception: " + e.getMessage(), e);
+                final Listener listener = getListener();
+                if (listener != null) {
+                    listener.onRunError(e);
+                }
+            } finally {
+                synchronized (this) {
+                    mState = State.STOPPED;
+                    Log.i(TAG, "Stopped.");
+                }
+            }
+        }
+
+        private void step() throws IOException {
+            // Handle incoming data.
+            int len = mDriver.read(mReadBuffer.array(), READ_WAIT_MILLIS);
+            if (len > 0) {
+                if (DEBUG) Log.d(TAG, "Read data len=" + len);
+                final Listener listener = getListener();
+                if (listener != null) {
+                    final byte[] data = new byte[len];
+                    mReadBuffer.get(data, 0, len);
+                    listener.onNewData(data);
+                }
+                mReadBuffer.clear();
+            }
+
+            // Handle outgoing data.
+            byte[] outBuff = null;
+            synchronized (mWriteBuffer) {
+                len = mWriteBuffer.position();
+                if (len > 0) {
+                    outBuff = new byte[len];
+                    mWriteBuffer.rewind();
+                    mWriteBuffer.get(outBuff, 0, len);
+                    mWriteBuffer.clear();
+                }
+            }
+            if (outBuff != null) {
+                if (DEBUG) {
+                    Log.d(TAG, "Writing data len=" + len);
+                }
+                mDriver.write(outBuff, READ_WAIT_MILLIS);
+            }
+        }
+
+    } // class SerialInputOutputManager
+
+
+    abstract class CommonUsbSerialPort implements UsbSerialPort {
+
+        public static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
+        public static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
+
+        protected final UsbDevice mDevice;
+        protected final int mPortNumber;
+
+        // non-null when open()
+        protected UsbDeviceConnection mConnection = null;
+
+        protected final Object mReadBufferLock = new Object();
+        protected final Object mWriteBufferLock = new Object();
+
+        /** Internal read buffer.  Guarded by {@link #mReadBufferLock}. */
+        protected byte[] mReadBuffer;
+
+        /** Internal write buffer.  Guarded by {@link #mWriteBufferLock}. */
+        protected byte[] mWriteBuffer;
+
+        public CommonUsbSerialPort(UsbDevice device, int portNumber) {
+            mDevice = device;
+            mPortNumber = portNumber;
+
+            mReadBuffer = new byte[DEFAULT_READ_BUFFER_SIZE];
+            mWriteBuffer = new byte[DEFAULT_WRITE_BUFFER_SIZE];
+        }
+
+        @Override
+        public String toString() {
+            return String.format("<%s device_name=%s device_id=%s port_number=%s>",
+                    getClass().getSimpleName(), mDevice.getDeviceName(),
+                    mDevice.getDeviceId(), mPortNumber);
+        }
+
+        /**
+         * Returns the currently-bound USB device.
+         *
+         * @return the device
+         */
+        public final UsbDevice getDevice() {
+            return mDevice;
+        }
+
+        @Override
+        public int getPortNumber() {
+            return mPortNumber;
+        }
+
+        /**
+         * Returns the device serial number
+         *  @return serial number
+         */
+        @Override
+        public String getSerial() {
+            return mConnection.getSerial();
+        }
+
+        /**
+         * Sets the size of the internal buffer used to exchange data with the USB
+         * stack for read operations.  Most users should not need to change this.
+         *
+         * @param bufferSize the size in bytes
+         */
+        public final void setReadBufferSize(int bufferSize) {
+            synchronized (mReadBufferLock) {
+                if (bufferSize == mReadBuffer.length) {
+                    return;
+                }
+                mReadBuffer = new byte[bufferSize];
+            }
+        }
+
+        /**
+         * Sets the size of the internal buffer used to exchange data with the USB
+         * stack for write operations.  Most users should not need to change this.
+         *
+         * @param bufferSize the size in bytes
+         */
+        public final void setWriteBufferSize(int bufferSize) {
+            synchronized (mWriteBufferLock) {
+                if (bufferSize == mWriteBuffer.length) {
+                    return;
+                }
+                mWriteBuffer = new byte[bufferSize];
+            }
+        }
+
+        @Override
+        public abstract void open(UsbDeviceConnection connection) throws IOException;
+
+        @Override
+        public abstract void close() throws IOException;
+
+        @Override
+        public abstract int read(final byte[] dest, final int timeoutMillis) throws IOException;
+
+        @Override
+        public abstract int write(final byte[] src, final int timeoutMillis) throws IOException;
+
+        @Override
+        public abstract void setParameters(
+                int baudRate, int dataBits, int stopBits, int parity) throws IOException;
+
+        @Override
+        public abstract boolean getCD() throws IOException;
+
+        @Override
+        public abstract boolean getCTS() throws IOException;
+
+        @Override
+        public abstract boolean getDSR() throws IOException;
+
+        @Override
+        public abstract boolean getDTR() throws IOException;
+
+        @Override
+        public abstract void setDTR(boolean value) throws IOException;
+
+        @Override
+        public abstract boolean getRI() throws IOException;
+
+        @Override
+        public abstract boolean getRTS() throws IOException;
+
+        @Override
+        public abstract void setRTS(boolean value) throws IOException;
+
+        @Override
+        public boolean purgeHwBuffers(boolean flushReadBuffers, boolean flushWriteBuffers) throws IOException {
+            return !flushReadBuffers && !flushWriteBuffers;
+        }
+
+    } // abstract class CommonUsbSerialPort
+
+
+
+    public class CdcAcmSerialDriver implements UsbSerialDriver {
+
+        private final String TAG = CdcAcmSerialDriver.class.getSimpleName();
+
+        private final UsbDevice mDevice;
+        private final UsbSerialPort mPort;
+
+        public CdcAcmSerialDriver(UsbDevice device) {
+            mDevice = device;
+            mPort = new CdcAcmSerialPort(device, 0);
+        }
+
+        @Override
+        public UsbDevice getDevice() {
+            return mDevice;
+        }
+
+        @Override
+        public List<UsbSerialPort> getPorts() {
+            return Collections.singletonList(mPort);
+        }
+
+        class CdcAcmSerialPort extends CommonUsbSerialPort {
+
+            private final boolean mEnableAsyncReads;
+            private UsbInterface mControlInterface;
+            private UsbInterface mDataInterface;
+
+            private UsbEndpoint mControlEndpoint;
+            private UsbEndpoint mReadEndpoint;
+            private UsbEndpoint mWriteEndpoint;
+
+            private boolean mRts = false;
+            private boolean mDtr = false;
+
+            private static final int USB_RECIP_INTERFACE = 0x01;
+            private static final int USB_RT_ACM = UsbConstants.USB_TYPE_CLASS | USB_RECIP_INTERFACE;
+
+            private static final int SET_LINE_CODING = 0x20;  // USB CDC 1.1 section 6.2
+            private static final int GET_LINE_CODING = 0x21;
+            private static final int SET_CONTROL_LINE_STATE = 0x22;
+            private static final int SEND_BREAK = 0x23;
+
+            public CdcAcmSerialPort(UsbDevice device, int portNumber) {
+                super(device, portNumber);
+                mEnableAsyncReads = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1);
+            }
+
+            @Override
+            public UsbSerialDriver getDriver() {
+                return CdcAcmSerialDriver.this;
+            }
+
+            @Override
+            public void open(UsbDeviceConnection connection) throws IOException {
+                if (mConnection != null) {
+                    throw new IOException("Already open");
+                }
+
+                mConnection = connection;
+                boolean opened = false;
+                try {
+
+                    if (1 == mDevice.getInterfaceCount()) {
+                        Log.d(TAG,"device might be castrated ACM device, trying single interface logic");
+                        openSingleInterface();
+                    } else {
+                        Log.d(TAG,"trying default interface logic");
+                        openInterface();
+                    }
+
+                    if (mEnableAsyncReads) {
+                        Log.d(TAG, "Async reads enabled");
+                    } else {
+                        Log.d(TAG, "Async reads disabled.");
+                    }
+
+
+                    opened = true;
+                } finally {
+                    if (!opened) {
+                        mConnection = null;
+                        // just to be on the save side
+                        mControlEndpoint = null;
+                        mReadEndpoint = null;
+                        mWriteEndpoint = null;
+                    }
+                }
+            }
+
+            private void openSingleInterface() throws IOException {
+                // the following code is inspired by the cdc-acm driver
+                // in the linux kernel
+
+                mControlInterface = mDevice.getInterface(0);
+                Log.d(TAG, "Control iface=" + mControlInterface);
+
+                mDataInterface = mDevice.getInterface(0);
+                Log.d(TAG, "data iface=" + mDataInterface);
+
+                if (!mConnection.claimInterface(mControlInterface, true)) {
+                    throw new IOException("Could not claim shared control/data interface.");
+                }
+
+                int endCount = mControlInterface.getEndpointCount();
+
+                if (endCount < 3) {
+                    Log.d(TAG,"not enough endpoints - need 3. count=" + mControlInterface.getEndpointCount());
+                    throw new IOException("Insufficient number of endpoints(" + mControlInterface.getEndpointCount() + ")");
+                }
+
+                // Analyse endpoints for their properties
+                mControlEndpoint = null;
+                mReadEndpoint = null;
+                mWriteEndpoint = null;
+                for (int i = 0; i < endCount; ++i) {
+                    UsbEndpoint ep = mControlInterface.getEndpoint(i);
+                    if ((ep.getDirection() == UsbConstants.USB_DIR_IN) &&
+                            (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_INT)) {
+                        Log.d(TAG,"Found controlling endpoint");
+                        mControlEndpoint = ep;
+                    } else if ((ep.getDirection() == UsbConstants.USB_DIR_IN) &&
+                            (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK)) {
+                        Log.d(TAG,"Found reading endpoint");
+                        mReadEndpoint = ep;
+                    } else if ((ep.getDirection() == UsbConstants.USB_DIR_OUT) &&
+                            (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK)) {
+                        Log.d(TAG,"Found writing endpoint");
+                        mWriteEndpoint = ep;
+                    }
+
+
+                    if ((mControlEndpoint != null) &&
+                            (mReadEndpoint != null) &&
+                            (mWriteEndpoint != null)) {
+                        Log.d(TAG,"Found all required endpoints");
+                        break;
+                    }
+                }
+
+                if ((mControlEndpoint == null) ||
+                        (mReadEndpoint == null) ||
+                        (mWriteEndpoint == null)) {
+                    Log.d(TAG,"Could not establish all endpoints");
+                    throw new IOException("Could not establish all endpoints");
+                }
+            }
+
+            private void openInterface() throws IOException {
+                Log.d(TAG, "claiming interfaces, count=" + mDevice.getInterfaceCount());
+
+                mControlInterface = mDevice.getInterface(0);
+                Log.d(TAG, "Control iface=" + mControlInterface);
+                // class should be USB_CLASS_COMM
+
+                if (!mConnection.claimInterface(mControlInterface, true)) {
+                    throw new IOException("Could not claim control interface.");
+                }
+
+                mControlEndpoint = mControlInterface.getEndpoint(0);
+                Log.d(TAG, "Control endpoint direction: " + mControlEndpoint.getDirection());
+
+                Log.d(TAG, "Claiming data interface.");
+                mDataInterface = mDevice.getInterface(1);
+                Log.d(TAG, "data iface=" + mDataInterface);
+                // class should be USB_CLASS_CDC_DATA
+
+                if (!mConnection.claimInterface(mDataInterface, true)) {
+                    throw new IOException("Could not claim data interface.");
+                }
+                mReadEndpoint = mDataInterface.getEndpoint(1);
+                Log.d(TAG, "Read endpoint direction: " + mReadEndpoint.getDirection());
+                mWriteEndpoint = mDataInterface.getEndpoint(0);
+                Log.d(TAG, "Write endpoint direction: " + mWriteEndpoint.getDirection());
+            }
+
+            private int sendAcmControlMessage(int request, int value, byte[] buf) {
+                return mConnection.controlTransfer(
+                        USB_RT_ACM, request, value, 0, buf, buf != null ? buf.length : 0, 5000);
+            }
+
+            @Override
+            public void close() throws IOException {
+                if (mConnection == null) {
+                    throw new IOException("Already closed");
+                }
+                mConnection.close();
+                mConnection = null;
+            }
+
+            @Override
+            public int read(byte[] dest, int timeoutMillis) throws IOException {
+                if (mEnableAsyncReads) {
+                    final UsbRequest request = new UsbRequest();
+                    try {
+                        request.initialize(mConnection, mReadEndpoint);
+                        final ByteBuffer buf = ByteBuffer.wrap(dest);
+                        if (!request.queue(buf, dest.length)) {
+                            throw new IOException("Error queueing request.");
+                        }
+
+                        final UsbRequest response = mConnection.requestWait();
+                        if (response == null) {
+                            throw new IOException("Null response");
+                        }
+
+                        final int nread = buf.position();
+                        if (nread > 0) {
+                            //Log.d(TAG, HexDump.dumpHexString(dest, 0, Math.min(32, dest.length)));
+                            return nread;
+                        } else {
+                            return 0;
+                        }
+                    } finally {
+                        request.close();
+                    }
+                }
+
+                final int numBytesRead;
+                synchronized (mReadBufferLock) {
+                    int readAmt = Math.min(dest.length, mReadBuffer.length);
+                    numBytesRead = mConnection.bulkTransfer(mReadEndpoint, mReadBuffer, readAmt,
+                            timeoutMillis);
+                    if (numBytesRead < 0) {
+                        // This sucks: we get -1 on timeout, not 0 as preferred.
+                        // We *should* use UsbRequest, except it has a bug/api oversight
+                        // where there is no way to determine the number of bytes read
+                        // in response :\ -- http://b.android.com/28023
+                        if (timeoutMillis == Integer.MAX_VALUE) {
+                            // Hack: Special case "~infinite timeout" as an error.
+                            return -1;
+                        }
+                        return 0;
+                    }
+                    System.arraycopy(mReadBuffer, 0, dest, 0, numBytesRead);
+                }
+                return numBytesRead;
+            }
+
+            @Override
+            public int write(byte[] src, int timeoutMillis) throws IOException {
+                // TODO(mikey): Nearly identical to FtdiSerial write. Refactor.
+                int offset = 0;
+
+                while (offset < src.length) {
+                    final int writeLength;
+                    final int amtWritten;
+
+                    synchronized (mWriteBufferLock) {
+                        final byte[] writeBuffer;
+
+                        writeLength = Math.min(src.length - offset, mWriteBuffer.length);
+                        if (offset == 0) {
+                            writeBuffer = src;
+                        } else {
+                            // bulkTransfer does not support offsets, make a copy.
+                            System.arraycopy(src, offset, mWriteBuffer, 0, writeLength);
+                            writeBuffer = mWriteBuffer;
+                        }
+
+                        amtWritten = mConnection.bulkTransfer(mWriteEndpoint, writeBuffer, writeLength,
+                                timeoutMillis);
+                    }
+                    if (amtWritten <= 0) {
+                        throw new IOException("Error writing " + writeLength
+                                + " bytes at offset " + offset + " length=" + src.length);
+                    }
+
+                    Log.d(TAG, "Wrote amt=" + amtWritten + " attempted=" + writeLength);
+                    offset += amtWritten;
+                }
+                return offset;
+            }
+
+            @Override
+            public void setParameters(int baudRate, int dataBits, int stopBits, int parity) {
+                byte stopBitsByte;
+                switch (stopBits) {
+                    case STOPBITS_1: stopBitsByte = 0; break;
+                    case STOPBITS_1_5: stopBitsByte = 1; break;
+                    case STOPBITS_2: stopBitsByte = 2; break;
+                    default: throw new IllegalArgumentException("Bad value for stopBits: " + stopBits);
+                }
+
+                byte parityBitesByte;
+                switch (parity) {
+                    case PARITY_NONE: parityBitesByte = 0; break;
+                    case PARITY_ODD: parityBitesByte = 1; break;
+                    case PARITY_EVEN: parityBitesByte = 2; break;
+                    case PARITY_MARK: parityBitesByte = 3; break;
+                    case PARITY_SPACE: parityBitesByte = 4; break;
+                    default: throw new IllegalArgumentException("Bad value for parity: " + parity);
+                }
+
+                byte[] msg = {
+                        (byte) ( baudRate & 0xff),
+                        (byte) ((baudRate >> 8 ) & 0xff),
+                        (byte) ((baudRate >> 16) & 0xff),
+                        (byte) ((baudRate >> 24) & 0xff),
+                        stopBitsByte,
+                        parityBitesByte,
+                        (byte) dataBits};
+                sendAcmControlMessage(SET_LINE_CODING, 0, msg);
+            }
+
+            @Override
+            public boolean getCD() throws IOException {
+                return false;  // TODO
+            }
+
+            @Override
+            public boolean getCTS() throws IOException {
+                return false;  // TODO
+            }
+
+            @Override
+            public boolean getDSR() throws IOException {
+                return false;  // TODO
+            }
+
+            @Override
+            public boolean getDTR() throws IOException {
+                return mDtr;
+            }
+
+            @Override
+            public void setDTR(boolean value) throws IOException {
+                mDtr = value;
+                setDtrRts();
+            }
+
+            @Override
+            public boolean getRI() throws IOException {
+                return false;  // TODO
+            }
+
+            @Override
+            public boolean getRTS() throws IOException {
+                return mRts;
+            }
+
+            @Override
+            public void setRTS(boolean value) throws IOException {
+                mRts = value;
+                setDtrRts();
+            }
+
+            private void setDtrRts() {
+                int value = (mRts ? 0x2 : 0) | (mDtr ? 0x1 : 0);
+                sendAcmControlMessage(SET_CONTROL_LINE_STATE, value, null);
+            }
+
+        }
+
+        public Map<Integer, int[]> getSupportedDevices() {
+            final Map<Integer, int[]> supportedDevices = new LinkedHashMap<Integer, int[]>();
+            supportedDevices.put(Integer.valueOf(UsbId.VENDOR_ARDUINO),
+                    new int[] {
+                            UsbId.ARDUINO_UNO,
+                            UsbId.ARDUINO_UNO_R3,
+                            UsbId.ARDUINO_MEGA_2560,
+                            UsbId.ARDUINO_MEGA_2560_R3,
+                            UsbId.ARDUINO_SERIAL_ADAPTER,
+                            UsbId.ARDUINO_SERIAL_ADAPTER_R3,
+                            UsbId.ARDUINO_MEGA_ADK,
+                            UsbId.ARDUINO_MEGA_ADK_R3,
+                            UsbId.ARDUINO_LEONARDO,
+                            UsbId.ARDUINO_MICRO,
+                    });
+            supportedDevices.put(Integer.valueOf(UsbId.VENDOR_VAN_OOIJEN_TECH),
+                    new int[] {
+                            UsbId.VAN_OOIJEN_TECH_TEENSYDUINO_SERIAL,
+                    });
+            supportedDevices.put(Integer.valueOf(UsbId.VENDOR_ATMEL),
+                    new int[] {
+                            UsbId.ATMEL_LUFA_CDC_DEMO_APP,
+                    });
+            supportedDevices.put(Integer.valueOf(UsbId.VENDOR_LEAFLABS),
+                    new int[] {
+                            UsbId.LEAFLABS_MAPLE,
+                    });
+            return supportedDevices;
+        }
+
+    } // class CdcAcmSerialDriver
 
 
     public class UsbSerialDevice {
@@ -1496,7 +2432,7 @@ public class PassportScanner extends UsbSerialDevice {
             }
         }
 
-    }
+    } // class UsbSerialDevice
 
 
 }
