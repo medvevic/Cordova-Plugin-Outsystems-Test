@@ -1,22 +1,7 @@
 package org.apache.cordova.passportscanner;
 
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.Config;
-import org.apache.cordova.CordovaArgs;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.ConfigXmlParser;
-import org.apache.cordova.CordovaWebView;
-import org.apache.cordova.LOG;
-import org.apache.cordova.PluginResult;
-import org.apache.cordova.Whitelist;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.xmlpull.v1.XmlPullParser;
-
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -33,30 +18,33 @@ import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbRequest;
 import android.os.Build;
 import android.util.Base64;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.View;
-import android.webkit.DownloadListener;
 import android.widget.ImageView;
+
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaArgs;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /*
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 */
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import android.util.Log;
 
 public class PassportScannerPlugin extends CordovaPlugin {
-
-    private static final String TAG = "PassportScannerPlugin";
 
     // The current driver that handle the serial port
     //private UsbSerialDriver driver;
@@ -94,7 +82,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private String lastUrl;
 
     //------------------------------- New for work from Outsystems
-    private static final String ACTION_USB_PERMISSION = TAG + ".USB_PERMISSION";
 
     // Index of the 'params' object in CordovaArgs array passed in each action.
     private static final int ARG_INDEX_PARAMS = 0;
@@ -138,29 +125,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     private CallbackContext openCallbackContext;
 
-    // Used when instantiated via reflection by PluginManager
-    public PassportScannerPlugin() {
-    }
-
-    // Encapsulates the Android UsbDevice and UsbDeviceConnection classes, and provides wrappers
-    // around the UsbInterface and UsbEndpoint methods to allow for mocking.
-    private static abstract class ConnectedDevice {
-        abstract int getInterfaceCount();
-        abstract int getEndpointCount(int interfaceNumber);
-        abstract void describeInterface(int interfaceNumber, JSONObject result)
-                throws JSONException;
-        abstract void describeEndpoint(int interfaceNumber, int endpointNumber, JSONObject result)
-                throws JSONException;
-        abstract boolean claimInterface(int interfaceNumber);
-        abstract boolean releaseInterface(int interfaceNumber);
-        abstract int controlTransfer(int requestType, int request, int value, int index,
-                                     byte[] transferBuffer, byte[] receiveBuffer, int timeout);
-        abstract int bulkTransfer(int interfaceNumber, int endpointNumber, int direction,
-                                  byte[] buffer, int timeout) throws UsbError;
-        abstract int interruptTransfer(int interfaceNumber, int endpointNumber, int direction,
-                                       byte[] buffer, int timeout) throws UsbError;
-        abstract void close();
-    };
+    private static final String TAG = "PassportScannerPlugin";
+    private static final String ACTION_AVAILABLE = "available";
+    private static final String ACTION_FIND_DEVICES = "findDevices";
+    private static final String ACTION_USB_PERMISSION = TAG + ".USB_PERMISSION";
 
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
@@ -171,12 +139,21 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
 
         try {
+            //if (action.equals(ACTION_SWITCH_ON)) {
+            //} else if (action.equals(ACTION_SWITCH_OFF)) {
 
             if ("hasUsbHostFeature".equals(action)) {
                 boolean usbHostFeature = cordova.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, usbHostFeature));
                 return true;
-            } else if ("findDevices".equals(action)) {
+            } else if (action.equals(ACTION_AVAILABLE)) {
+                callbackContext.success(1);
+                return true;
+
+                //boolean usbHostFeature = cordova.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
+                //callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, usbHostFeature));
+                //return true;
+            } else if (action.equals(ACTION_FIND_DEVICES)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
@@ -314,6 +291,40 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
         return false;
     }
+
+
+
+
+
+
+
+//--------------------------------------------------------------------------------------------------
+
+    // Used when instantiated via reflection by PluginManager
+    public PassportScannerPlugin() {
+    }
+
+    // Encapsulates the Android UsbDevice and UsbDeviceConnection classes, and provides wrappers
+    // around the UsbInterface and UsbEndpoint methods to allow for mocking.
+    private static abstract class ConnectedDevice {
+        abstract int getInterfaceCount();
+        abstract int getEndpointCount(int interfaceNumber);
+        abstract void describeInterface(int interfaceNumber, JSONObject result)
+                throws JSONException;
+        abstract void describeEndpoint(int interfaceNumber, int endpointNumber, JSONObject result)
+                throws JSONException;
+        abstract boolean claimInterface(int interfaceNumber);
+        abstract boolean releaseInterface(int interfaceNumber);
+        abstract int controlTransfer(int requestType, int request, int value, int index,
+                                     byte[] transferBuffer, byte[] receiveBuffer, int timeout);
+        abstract int bulkTransfer(int interfaceNumber, int endpointNumber, int direction,
+                                  byte[] buffer, int timeout) throws UsbError;
+        abstract int interruptTransfer(int interfaceNumber, int endpointNumber, int direction,
+                                       byte[] buffer, int timeout) throws UsbError;
+        abstract void close();
+    };
+
+
     private void getDevices(CordovaArgs args, JSONObject params,
                             final CallbackContext callbackContext) throws JSONException, UsbError {
         HashMap<String, UsbDevice> devices = mUsbManager.getDeviceList();
