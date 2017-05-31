@@ -79,6 +79,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private ImageView imageView;
     private View errorView;
     private PassportScanner passportScanner;
+    private String resultFindDevice;
+
     //private TscPrinter tscPrinter;
     private String lastUrl;
 
@@ -224,17 +226,15 @@ public class PassportScannerPlugin extends CordovaPlugin {
     }
 
     private String findDevices() {
-        String result = "";
         try {
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
-            result = barcodeReaderDevice.getName();
+            //result = barcodeReaderDevice.getName();
             new DeviceFinder(new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
                     String name = device.getName();
-                    //result = "";
-
+                    resultFindDevice = device.getName();
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
@@ -258,7 +258,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         catch (Throwable e) {
             return e.getMessage();
         }
-        return result;
+        return resultFindDevice;
     }
 
 
