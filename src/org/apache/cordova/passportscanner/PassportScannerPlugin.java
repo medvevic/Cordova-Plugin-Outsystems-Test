@@ -159,12 +159,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
             } else if (action.equals(ACTION_FIND_DEVICES)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
+                        String result = "";
                         try {
-                            int isFound = findDevices() == true ? 1 : 0;
-                            String passportScannerStr = passportScanner.toString();
+                            result = findDevices();
+                            String passportScannerStr = passportScanner == null? "passportScanner=null" : passportScanner.toString();
                             openCallbackContext.success("Success. PassportScannerPlugin -> findDevices : " + passportScannerStr);
                         } catch (Exception e) {
-                            openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage());
+                            openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage() + " " + result);
                         }
                     }
                 });
@@ -222,7 +223,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         return false;
     }
 
-    private boolean findDevices() {
+    private String findDevices() {
         try {
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
@@ -252,9 +253,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
             // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
         }
         catch (Throwable e) {
-            return false;
+            return e.getMessage();
         }
-        return true;
+        return "";
     }
 
 
