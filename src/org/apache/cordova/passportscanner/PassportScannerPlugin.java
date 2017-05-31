@@ -161,7 +161,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     public void run() {
                         try {
                             int isFound = findDevices() == true ? 1 : 0;
-                            openCallbackContext.success(isFound);
+                            String passportScannerStr = passportScanner.toString();
+                            openCallbackContext.success(passportScannerStr);
                         } catch (Exception e) {
                             openCallbackContext.error(e.getMessage());
                         }
