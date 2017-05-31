@@ -16,15 +16,15 @@ PassportScannerPlugin.prototype = {
 //    }, function() { callback(false); }, "PassportScannerPlugin", "findDevices", []);
 //  },
 
-  findDevices: function (callback) {
-    cordova.exec(function (passportScannerString) {
-      callback(passportScannerString);
-    }, function() { callback(passportScannerString); }, "PassportScannerPlugin", "findDevices", []);
-  },
-
-//  findDevices: function (successCallback, errorCallback, options) {
-//    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "findDevices", []);
+//  findDevices: function (callback) {
+//    cordova.exec(function (passportScannerString) {
+//      callback(passportScannerString);
+//    }, function() { callback(passportScannerString); }, "PassportScannerPlugin", "findDevices", []);
 //  },
+
+  findDevices: function (successCallback, errorCallback, options) {
+    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "findDevices", []);
+  },
 };
 
 PassportScannerPlugin.install = function () {
