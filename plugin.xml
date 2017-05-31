@@ -20,6 +20,8 @@
 
   <js-module src="www/PassportScannerPlugin.js" name="PassportScannerPlugin">
     <clobbers target="window.plugins.passportscannerplugin" />
+    <clobbers target="cordova.plugins.passportscannerplugin" />
+    <clobbers target="plugins.passportscannerplugin" />
   </js-module>
 
   <platform name="android">
