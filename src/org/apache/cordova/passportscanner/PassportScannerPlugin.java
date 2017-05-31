@@ -224,13 +224,16 @@ public class PassportScannerPlugin extends CordovaPlugin {
     }
 
     private String findDevices() {
+        String result = "";
         try {
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
+            result = barcodeReaderDevice.getName();
             new DeviceFinder(new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
                     String name = device.getName();
+                    //result = "";
 
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
@@ -255,7 +258,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         catch (Throwable e) {
             return e.getMessage();
         }
-        return "";
+        return result;
     }
 
 
