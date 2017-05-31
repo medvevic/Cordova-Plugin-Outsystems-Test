@@ -163,7 +163,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         try {
                             result = findDevices();
                             String passportScannerStr = passportScanner == null? "passportScanner=null" : passportScanner.toString();
-                            openCallbackContext.success("Success. PassportScannerPlugin -> findDevices : " + passportScannerStr);
+                            openCallbackContext.success("findDevices : " + result);
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage() + " " + result);
                         }
