@@ -229,23 +229,21 @@ public class PassportScannerPlugin extends CordovaPlugin {
         try {
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
-            resultFindDevice = barcodeReaderDevice.getName();
-
-            //DeviceFinder(final DeviceFinder.EventListener listener)
+            //resultFindDevice = barcodeReaderDevice.getName();
+/*
             DeviceFinder.EventListener listener = new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
                     resultFindDevice = resultFindDevice + " onDeviceFound = " + device.getName();
                 }
             };
-
             resultFindDevice = resultFindDevice + " listener = " + listener.toString();
-
-            /*
+*/
             new DeviceFinder(new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
                     String name = device.getName();
+                    resultFindDevice = resultFindDevice + " device.toString() = " + device.toString();
                     resultFindDevice = resultFindDevice + " device.getName() = " + device.getName();
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
@@ -266,11 +264,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
             }).find(this.cordova.getActivity().getApplicationContext(), barcodeReaderDevice, dw.forPassportScannerNew(),
                     dw.forPassportScanner(), dw.forReceiptPrinter(), dw.forBluetoothPrinterTSC());
 
-            */
             // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
         }
         catch (Throwable e) {
-            return e.getMessage();
+            return resultFindDevice + e.getMessage();
         }
         return resultFindDevice;
     }
@@ -1003,6 +1000,7 @@ public class DeviceWrapper {
 //--------------------------------------------------------------------------------------------------
 public static class DeviceFinder {
 
+    String deviceName = "";
     public interface EventListener {
         void onDeviceFound(DeviceWrapper device);
     }
@@ -1011,9 +1009,9 @@ public static class DeviceFinder {
         this.listener = listener;
     }
 
-    public void find(final Context context, DeviceWrapper... devices) {
+    public String find(final Context context, DeviceWrapper... devices) {
         if (devices == null)
-            return;
+            return "devices == null";
         this.devices = devices;
 /*
         if (!EnvironmentHelper.getInstance().isMerchantDevice()) {
@@ -1045,6 +1043,7 @@ public static class DeviceFinder {
                 for (final UsbDevice device : usbManager.getDeviceList().values()) {
                     DeviceWrapper dev = findDevice(device);
                     if (dev != null) {
+                        deviceName = "USB";
                         usbManager.requestPermission(device, intent);
                     }
                 }
@@ -1060,6 +1059,7 @@ public static class DeviceFinder {
                     if (id > 0) {
                         DeviceWrapper dev = findDevice(inputManager.getInputDevice(id));
                         if (dev != null) {
+                            deviceName = "HID";
                             listener.onDeviceFound(dev);
                         }
                     }
@@ -1067,6 +1067,8 @@ public static class DeviceFinder {
             }
         } catch (Throwable e) {
         }
+
+        return "device " + deviceName + " found!";
     }
 
     private static final String ACTION_USB_PERMISSION = "net.etaxfree.refund.helpers.USB_PERMISSION";
