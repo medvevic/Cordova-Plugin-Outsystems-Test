@@ -230,6 +230,18 @@ public class PassportScannerPlugin extends CordovaPlugin {
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
             resultFindDevice = barcodeReaderDevice.getName();
+
+            //DeviceFinder(final DeviceFinder.EventListener listener)
+            DeviceFinder.EventListener listener = new DeviceFinder.EventListener() {
+                @Override
+                public void onDeviceFound(DeviceWrapper device) {
+                    resultFindDevice = resultFindDevice + " onDeviceFound = " + device.getName();
+                }
+            };
+
+            resultFindDevice = resultFindDevice + " listener = " + listener.toString();
+
+            /*
             new DeviceFinder(new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
@@ -253,6 +265,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 }
             }).find(this.cordova.getActivity().getApplicationContext(), barcodeReaderDevice, dw.forPassportScannerNew(),
                     dw.forPassportScanner(), dw.forReceiptPrinter(), dw.forBluetoothPrinterTSC());
+
+            */
             // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
         }
         catch (Throwable e) {
