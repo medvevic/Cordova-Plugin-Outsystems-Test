@@ -136,10 +136,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
             throws JSONException {
-        //final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS);
-        //final CordovaArgs finalArgs = args;
-        //Log.d(TAG, "Action: " + action + " params: " + params);
-        Log.d(TAG, "Action: " + action);
+        final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS);
+        final CordovaArgs finalArgs = args;
+        Log.d(TAG, "Action: " + action + " params: " + params);
+        //Log.d(TAG, "Action: " + action);
         this.openCallbackContext = callbackContext;
 
         try {
@@ -150,14 +150,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 boolean usbHostFeature = cordova.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, usbHostFeature));
                 return true;
-            } else if (action.equals(ACTION_AVAILABLE)) {
-            //} else if ("available".equals(action)) {
-                openCallbackContext.success(1);
-                return true;
-
-                //boolean usbHostFeature = cordova.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
-                //callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, usbHostFeature));
-                //return true;
+            //} else if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
+            //    openCallbackContext.success(1);
+            //    return true;
             } else if (action.equals(ACTION_FIND_DEVICES)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -173,8 +168,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 });
                 return true;
             }
-
-/*
             else if ("getDevices".equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -211,17 +204,14 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 releaseInterface(args, params, callbackContext);
                 return true;
             }
-*/
-
         } catch (UsbError e) {
             callbackContext.error(e.getMessage());
             return true;
         }
-//        catch (JSONException e) {
-//            callbackContext.error(e.getMessage());
-//            return true;
-//        }
-
+        catch (JSONException e) {
+            callbackContext.error(e.getMessage());
+            return true;
+        }
         return false;
     }
 
@@ -229,7 +219,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         try {
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
-            //resultFindDevice = barcodeReaderDevice.getName();
+            resultFindDevice = barcodeReaderDevice.getName();
 /*
             DeviceFinder.EventListener listener = new DeviceFinder.EventListener() {
                 @Override
@@ -243,8 +233,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
                     String name = device.getName();
-                    resultFindDevice = resultFindDevice + " device.toString() = " + device.toString();
-                    resultFindDevice = resultFindDevice + " device.getName() = " + device.getName();
+                    resultFindDevice = resultFindDevice + ", device.toString() = " + device.toString();
+                    resultFindDevice = resultFindDevice + ", device.getName() = " + device.getName();
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
