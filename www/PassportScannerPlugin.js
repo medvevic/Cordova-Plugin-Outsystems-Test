@@ -6,10 +6,10 @@ function PassportScannerPlugin() {
 //};
 
 PassportScannerPlugin.prototype = {
-
+/*
   hasUsbHostFeature: function (successCallback, errorCallback, options) {
     cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "hasUsbHostFeature", []);
-
+*/
   available: function (callback) {
     cordova.exec(function (avail) {
       callback(avail ? true : false);
@@ -66,6 +66,7 @@ PassportScannerPlugin.prototype = {
 
 };
 
+/*
 PassportScannerPlugin.install = function () {
   if (!window.plugins) {
     window.plugins = {};
@@ -76,3 +77,4 @@ PassportScannerPlugin.install = function () {
 };
 
 cordova.addConstructor(PassportScannerPlugin.install);
+*/
