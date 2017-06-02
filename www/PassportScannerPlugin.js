@@ -11,7 +11,7 @@ PassportScannerPlugin.prototype = {
 
   findDevices: function (successCallback, errorCallback, options) {
     cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "findDevices", []);
-  },
+  };
 
 };
 
