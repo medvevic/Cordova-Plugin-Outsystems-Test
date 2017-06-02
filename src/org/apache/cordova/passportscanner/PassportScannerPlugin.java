@@ -136,10 +136,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
             throws JSONException {
-        final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS);
-        final CordovaArgs finalArgs = args;
-        Log.d(TAG, "Action: " + action + " params: " + params);
-        //Log.d(TAG, "Action: " + action);
+    //    final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS);
+    //    final CordovaArgs finalArgs = args;
+    //    Log.d(TAG, "Action: " + action + " params: " + params);
+          Log.d(TAG, "Action: " + action);
         this.openCallbackContext = callbackContext;
 
         try {
