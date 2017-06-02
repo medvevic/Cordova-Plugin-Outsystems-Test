@@ -150,9 +150,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 boolean usbHostFeature = cordova.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, usbHostFeature));
                 return true;
-            //} else if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
-            //    openCallbackContext.success(1);
-            //    return true;
+            } else if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
+                openCallbackContext.success(1);
+                return true;
             } else if (action.equals(ACTION_FIND_DEVICES)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -160,7 +160,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         try {
                             result = findDevices();
                             String passportScannerStr = passportScanner == null? "passportScanner=null" : passportScanner.toString();
-                            openCallbackContext.success("findDevices : " + result);
+                            openCallbackContext.success("findDevices : " + passportScannerStr + " " + result);
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage() + " " + result);
                         }
