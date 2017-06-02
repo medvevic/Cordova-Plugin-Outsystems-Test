@@ -168,7 +168,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 });
                 return true;
             }
-            else if ("getDevices".equals(action)) {
+/*            else if ("getDevices".equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
@@ -203,15 +203,15 @@ public class PassportScannerPlugin extends CordovaPlugin {
             } else if ("releaseInterface".equals(action)) {
                 releaseInterface(args, params, callbackContext);
                 return true;
-            }
+            }*/
         } catch (UsbError e) {
             callbackContext.error("UsbError" + e.getMessage());
             return true;
         }
-        catch (JSONException e) {
+/*        catch (JSONException e) {
             callbackContext.error("JSONException " + e.getMessage());
             return true;
-        }
+        }*/
         return false;
     }
 
