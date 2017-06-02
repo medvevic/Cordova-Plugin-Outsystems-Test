@@ -66,7 +66,7 @@ PassportScannerPlugin.prototype = {
 
 };
 
-/*
+
 PassportScannerPlugin.install = function () {
   if (!window.plugins) {
     window.plugins = {};
@@ -77,4 +77,3 @@ PassportScannerPlugin.install = function () {
 };
 
 cordova.addConstructor(PassportScannerPlugin.install);
-*/
