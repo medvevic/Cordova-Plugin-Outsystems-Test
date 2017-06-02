@@ -205,11 +205,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 return true;
             }
         } catch (UsbError e) {
-            callbackContext.error(e.getMessage());
+            callbackContext.error("UsbError" + e.getMessage());
             return true;
         }
         catch (JSONException e) {
-            callbackContext.error(e.getMessage());
+            callbackContext.error("JSONException " + e.getMessage());
             return true;
         }
         return false;
