@@ -9,12 +9,12 @@ PassportScannerPlugin.prototype = {
 /*
   hasUsbHostFeature: function (successCallback, errorCallback, options) {
     cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "hasUsbHostFeature", []);
-*/
   available: function (callback) {
     cordova.exec(function (avail) {
       callback(avail ? true : false);
     }, function() { callback(false); }, "PassportScannerPlugin", "available", []);
   },
+*/
 
 //  findDevices: function (callback) {
 //    cordova.exec(function (found) {
@@ -28,10 +28,15 @@ PassportScannerPlugin.prototype = {
 //    }, function() { callback(passportScannerString); }, "PassportScannerPlugin", "findDevices", []);
 //  },
 
+    findDevices = function (successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "findDevices");
+    };
+
+/*
     findDevices: function (successCallback, errorCallback, options) {
         cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "findDevices", []);
     },
-
+*/
 /*
     getDevices: function(options, callback) {
       cordova.exec(
