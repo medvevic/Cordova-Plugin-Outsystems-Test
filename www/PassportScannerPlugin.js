@@ -9,8 +9,8 @@ PassportScannerPlugin.prototype = {
     }, function() { callback(false); }, "PassportScannerPlugin", "available", []);
   },
 
-  findDevices: function (successCallback, errorCallback, options) {
-    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "findDevices", []);
+  findDevices: function (successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "findDevices");
   },
 
 };
