@@ -136,7 +136,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
             throws JSONException {
-        //   final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS); // <- returns JSON error!!!!
+        final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS); // <- returns JSON error!!!!
     //    final CordovaArgs finalArgs = args;
     //    Log.d(TAG, "Action: " + action + " params: " + params);
           Log.d(TAG, "Action: " + action);
@@ -161,7 +161,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             result = findDevices();
                             String passportScannerStr = passportScanner == null? "passportScanner=null" : passportScanner.toString();
                             //openCallbackContext.success("findDevices : " + passportScannerStr + " " + result);
-                            openCallbackContext.success("findDevices : " + result + " args: " + args);
+                            //openCallbackContext.success("findDevices : " + result + " args: " + args);
+                            openCallbackContext.success("findDevices params : " + params);
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage() + " " + result);
                         }
@@ -208,7 +209,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             }
 */
         } catch (UsbError e) {
-            callbackContext.error("UsbError" + e.getMessage());
+            callbackContext.error("UsbError: " + e.getMessage());
             return true;
         }
 /*        catch (JSONException e) {
