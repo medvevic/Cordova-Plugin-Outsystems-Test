@@ -136,7 +136,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
             throws JSONException {
-    //    final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS);
+        //   final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS); // <- returns JSON error!!!!
     //    final CordovaArgs finalArgs = args;
     //    Log.d(TAG, "Action: " + action + " params: " + params);
           Log.d(TAG, "Action: " + action);
@@ -160,7 +160,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         try {
                             result = findDevices();
                             String passportScannerStr = passportScanner == null? "passportScanner=null" : passportScanner.toString();
-                            openCallbackContext.success("findDevices : " + passportScannerStr + " " + result);
+                            //openCallbackContext.success("findDevices : " + passportScannerStr + " " + result);
+                            openCallbackContext.success("findDevices : " + result + " args: " + args);
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage() + " " + result);
                         }
@@ -168,7 +169,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 });
                 return true;
             }
-/*            else if ("getDevices".equals(action)) {
+/*
+            else if ("getDevices".equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
@@ -203,7 +205,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
             } else if ("releaseInterface".equals(action)) {
                 releaseInterface(args, params, callbackContext);
                 return true;
-            }*/
+            }
+*/
         } catch (UsbError e) {
             callbackContext.error("UsbError" + e.getMessage());
             return true;
