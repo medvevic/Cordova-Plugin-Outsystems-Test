@@ -161,7 +161,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         try {
                             String passportScannerStr = passportScanner == null? "passportScanner=null" : passportScanner.toString();
                             //openCallbackContext.success("findDevices : " + passportScannerStr + " " + result);
-                            openCallbackContext.success("findDevices(): " + findDevices() + " args: " + args);
+                            openCallbackContext.success("findDevices(): " + findDevices() + ", args = " + args);
                             //openCallbackContext.success("findDevices params : " + params);
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage());
@@ -244,9 +244,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
                 //usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
                 if(usbManager != null) {
-
                     resultFindDevice = resultFindDevice + ", context.getPackageName() = " + context.getPackageName();
                     resultFindDevice = resultFindDevice + ", usbManager.toString() = " + usbManager.toString();
+                    resultFindDevice = resultFindDevice + ", usbManager.getDeviceList().size() = " + usbManager.getDeviceList().size();
+                    resultFindDevice = resultFindDevice + ", usbManager.getDeviceList().values() = " + usbManager.getDeviceList().values();
                     /*
                     context.registerReceiver(receiver, new IntentFilter(ACTION_USB_PERMISSION));
                     PendingIntent intent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
