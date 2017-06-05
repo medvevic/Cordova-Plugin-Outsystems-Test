@@ -5,6 +5,8 @@ import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -231,6 +233,34 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 }
             };
             resultFindDevice = resultFindDevice + " listener = " + listener.toString();
+
+
+
+            //final BroadcastReceiver receiver = new BroadcastReceiver() {
+
+            try {
+
+                Context context = this.cordova.getActivity().getApplicationContext();
+                UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+                //usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+                if(usbManager != null) {
+
+                    resultFindDevice = resultFindDevice + ", context.getPackageName() = " + context.getPackageName();
+                    resultFindDevice = resultFindDevice + ", usbManager.toString() = " + usbManager.toString();
+                    /*
+                    context.registerReceiver(receiver, new IntentFilter(ACTION_USB_PERMISSION));
+                    PendingIntent intent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+                    for (final UsbDevice device : usbManager.getDeviceList().values()) {
+                        DeviceWrapper dev = findDevice(device);
+                        if (dev != null) {
+                            usbManager.requestPermission(device, intent);
+                        }
+                    }
+                    */
+                }
+            } catch (Throwable e) {
+            }
+
 
             // Existing code
             new DeviceFinder(new DeviceFinder.EventListener() {
@@ -1004,6 +1034,7 @@ public static class DeviceFinder {
     }
 
     public String find(final Context context, DeviceWrapper... devices) {
+
         if (devices == null)
             return "devices == null";
         this.devices = devices;
