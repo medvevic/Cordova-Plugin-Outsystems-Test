@@ -222,7 +222,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
             resultFindDevice = barcodeReaderDevice.getName();
-/*
+
+            // Check Listener
             DeviceFinder.EventListener listener = new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
@@ -230,7 +231,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 }
             };
             resultFindDevice = resultFindDevice + " listener = " + listener.toString();
-*/
+
+            // Existing code
             new DeviceFinder(new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
