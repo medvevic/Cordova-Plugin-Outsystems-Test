@@ -232,7 +232,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     resultFindDevice = resultFindDevice + " onDeviceFound = " + device.getName();
                 }
             };
-            resultFindDevice = resultFindDevice + " listener = " + listener.toString();
+            //resultFindDevice = resultFindDevice + " listener = " + listener.toString();
 
 
 
@@ -243,7 +243,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     resultFindDevice = resultFindDevice + ", onReceive intent.toString() = " + intent.toString();
                 }
             };
-            resultFindDevice = resultFindDevice + ", receiver.toString() = " + receiver.toString();
+            //resultFindDevice = resultFindDevice + ", receiver.toString() = " + receiver.toString();
 
             try {
 
@@ -251,11 +251,12 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
                 //usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
                 if(usbManager != null) {
+                    /*
                     resultFindDevice = resultFindDevice + ", context.getPackageName() = " + context.getPackageName();
                     resultFindDevice = resultFindDevice + ", usbManager.toString() = " + usbManager.toString();
                     resultFindDevice = resultFindDevice + ", usbManager.getDeviceList().size() = " + usbManager.getDeviceList().size();
                     resultFindDevice = resultFindDevice + ", usbManager.getDeviceList().values() = " + usbManager.getDeviceList().values();
-                    /*
+
                     context.registerReceiver(receiver, new IntentFilter(ACTION_USB_PERMISSION));
                     PendingIntent intent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
                     for (final UsbDevice device : usbManager.getDeviceList().values()) {
@@ -275,8 +276,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
                     String name = device.getName();
-                    resultFindDevice = resultFindDevice + ", device.toString() = " + device.toString();
-                    resultFindDevice = resultFindDevice + ", device.getName() = " + device.getName();
+                    resultFindDevice = resultFindDevice + ", onDeviceFound device.toString() = " + device.toString();
+                    resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
