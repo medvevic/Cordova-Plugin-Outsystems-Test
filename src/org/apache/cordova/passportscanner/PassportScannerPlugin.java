@@ -243,6 +243,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     resultFindDevice = resultFindDevice + ", onReceive intent.toString() = " + intent.toString();
                 }
             };
+            resultFindDevice = resultFindDevice + ", receiver.toString() = " + receiver.toString();
 
             try {
 
