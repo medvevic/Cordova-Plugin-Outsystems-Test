@@ -2190,20 +2190,20 @@ public class PassportScannerPlugin extends CordovaPlugin {
         //showMessage(null, e, true);
     }
 
-    private void startReadingPassport() {
+    private String startReadingPassport() {
         //if (STUB_PASSPORT_READING) {
         //    stubReadingPassport();
         //    return;
         //}
 
         if (passportScanner == null || !passportScanner.hasConnection()) {
-            return; // "passportScanner is null";
+            return "passportScanner is null";
         }
         stopReadingPassportFlag = new NotificationFlag();
 
-        new AsyncTask<Void, Integer, Void>() {
+        AsyncTask<Void, Integer, String> res = new AsyncTask<Void, Integer, String>() {
             @Override
-            protected Void doInBackground(Void... voids) {
+            protected String doInBackground(Void... voids) {
                 String[] mrz = null;
                 boolean wasIoError = false;
                 while (!stopReadingPassportFlag.isSet()) {
@@ -2217,11 +2217,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 passportScanner.resume();
                             } catch (Throwable e1) {
                                 //Logger.getInstance().write(e1);
-                                //return "error = ";
-                             }
+                                return "error = " + e1.getMessage();
+                            }
                             // Avoid going into loop hitting on the same IO error over and over again
                             if (wasIoError) {
-                                return null;
+                                return "Avoid going into loop hitting on the same IO error over and over again";
                             } else {
                                 wasIoError = true;
                             }
@@ -2229,7 +2229,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
 
                     if (stopReadingPassportFlag.isSet()) {
-                        return null;
+                        return "stopReadingPassportFlag.isSet()";
                     }
 
                     if (mrz != null && mrz.length > 0) {
@@ -2247,7 +2247,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             } else {
                                 showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
 
-                                //return passport.getDocumentNumber();
+                                return "Passport number = " + passport.getDocumentNumber() + " Name = " + passport.getFirstName() + " " + passport.getLastName();
 
                                 //TaxFreeApi.getInstance().saveCustomer(passport, new WSResponseHandler<Integer>() {
                                 //    @Override
@@ -2268,14 +2268,19 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             }
                         } catch (PassportCrcException e) {
                             showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
+                            return "Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
                         } catch (Exception e) {
                             showMessage(e);
+                            return "error = " + e.getMessage();
                         }
                     }
                 }
-                return null;
+                return "while (!stopReadingPassportFlag.isSet())";
             }
         }.execute();
+
+
+        return res.toString();
     }
 
     public abstract class Logger {
