@@ -1,12 +1,12 @@
 package org.apache.cordova.passportscanner;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 
-import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -18,8 +18,10 @@ import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbRequest;
+import android.icu.text.SimpleDateFormat;
+import android.net.ParseException;
+import android.os.AsyncTask;
 import android.os.Build;
-import android.util.Base64;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.View;
@@ -30,18 +32,25 @@ import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -100,6 +109,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private UsbManager mUsbManager;
     private PendingIntent mPermissionIntent;
     private BroadcastReceiver mUsbReceiver;
+    private NotificationFlag stopReadingPassportFlag;
+
     @Override
     public void onReset() {
         unregisterReceiver();
@@ -174,11 +185,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
-                        resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
+                                resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
 
                         passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
 
-                        resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner = " + passportScanner.toString();
+                        startReadingPassport();
+
+                                resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection(); // passportScanner.hasConnection()
 
                         //addUserAgent(UrlHelper.UA_PASSPORT_READER);
                     } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
@@ -202,6 +215,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
         return resultFindDevice;
     }
+
 
     // Used when instantiated via reflection by PluginManager
     public PassportScannerPlugin() {
@@ -239,7 +253,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     }
 
-    //--------------------------------------------------------------------------------------------------
     public class DeviceWrapper {
 
 
@@ -380,7 +393,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     }
 
-    //--------------------------------------------------------------------------------------------------
     public static class DeviceFinder {
 
         String deviceName = "";
@@ -536,7 +548,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 */
     } // class DeviceFinder
 
-    //--------------------------------------------------------------------------------------------------
     public class PassportScanner extends UsbSerialDevice {
 
         public PassportScanner(UsbDevice device, UsbDeviceConnection connection) {
@@ -786,7 +797,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     } // class PassportScanner
 
-    //--------------------------------------------------------------------------------------------------
     public final class UsbId {
 
         public static final int VENDOR_FTDI = 0x0403;
@@ -831,7 +841,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
 
     }
-
 
     public interface UsbSerialPort {
 
@@ -1201,7 +1210,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     } // class SerialInputOutputManager
 
-
     abstract class CommonUsbSerialPort implements UsbSerialPort {
 
         public static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
@@ -1336,8 +1344,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
 
     } // abstract class CommonUsbSerialPort
-
-
 
     public class CdcAcmSerialDriver implements UsbSerialDriver {
 
@@ -1725,7 +1731,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     } // class CdcAcmSerialDriver
 
-
     public class UsbSerialDevice {
 
         public UsbSerialDevice(UsbDevice device, UsbDeviceConnection connection) {
@@ -1768,6 +1773,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
 
         public void resume() throws IOException {
+            /*
             synchronized (this) {
                 if (getPort() == null) {
                     throw new IOException("Device unavailable.");
@@ -1784,13 +1790,14 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 startIoManager();
                 isOpen = true;
             }
+            */
         }
 
         public boolean isOpen() {
             return isOpen;
         }
 
-        protected UsbSerialPort getPort() {
+        public UsbSerialPort getPort() {
             if (port == null) {
                 if (usbSerialDriver == null || usbSerialDriver.getPorts() == null || usbSerialDriver.getPorts().isEmpty()) {
                     return null;
@@ -1839,5 +1846,650 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     } // class UsbSerialDevice
 
+    //--------------------------------------------------------------------------------------------------
+    public interface IPassport {
+        boolean hasData();
+        String getFirstName();
+        String getLastName();
+        String getDocumentType();
+        String getDocumentNumber();
+        Date getBirthDate();
+        Date getValidityDate();
+        String getGender();
+        String getNationality();
+        String getIssuingState();
+    }
 
-}
+    public class PassportCrcException extends Exception {
+        public PassportCrcException() {
+            super("Document data verification by CRC failed");
+        }
+    }
+
+    public class Passport implements IPassport {
+
+        public  static final String DOCUMENT_TYPE_PASSPORT = "P";
+
+        public Passport(String[] mrz) throws PassportCrcException {
+            mMRZ = mrz;
+            if (mMRZ != null) {
+                if (mMRZ.length == 3) {
+                    is3lines = true;
+                } else if (mMRZ.length == 2) {
+                    is3lines = false;
+                } else {
+                    mMRZ = null;
+                }
+            }
+            if (mMRZ != null) {
+                if (!verifyCrcWithCorrection()) {
+                    throw new PassportCrcException();
+                }
+            }
+        }
+
+        public boolean hasData() {
+            return mMRZ != null;
+        }
+
+        public boolean verifyCrc() {
+            return verifyCrc(extractControlInfo());
+        }
+
+        public String getFirstName() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            if (is3lines) {
+                int pos = mMRZ[2].indexOf("<<");
+                return mMRZ[2].substring(pos + 2, mMRZ[2].indexOf("<<", pos + 2)).replace('<', ' ');
+            } else {
+                int pos = mMRZ[0].indexOf("<<", 5);
+                return mMRZ[0].substring(pos + 2, mMRZ[0].indexOf("<<", pos + 2)).replace('<', ' ');
+            }
+        }
+
+        public String getLastName() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            if (is3lines) {
+                return mMRZ[2].substring(0, mMRZ[2].indexOf("<<")).replace('<', ' ');
+            } else {
+                return mMRZ[0].substring(5, mMRZ[0].indexOf("<<", 5)).replace('<', ' ');
+            }
+        }
+
+        public String getDocumentType() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            return mMRZ[0].substring(0, 1);
+        }
+
+        public boolean isPassport() {
+            return DOCUMENT_TYPE_PASSPORT.equals(getDocumentType());
+        }
+
+        public String getDocumentNumber() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            if (is3lines) {
+                if (mMRZ[0].substring(14, 15).contains("<")) {
+                    String s = mMRZ[0].substring(5, 13) + mMRZ[0].substring(15, mMRZ[0].indexOf("<<", 15));
+
+                    return s.replace('<', ' ');
+                } else {
+                    return mMRZ[0].substring(5, 13).replace('<', ' ');
+                }
+            } else {
+                String value = mMRZ[1].substring(0, 9);
+                int stopperIndex = value.indexOf('<');
+                if (stopperIndex > -1) {
+                    value = value.substring(0, stopperIndex);
+                }
+                return value;
+            }
+        }
+
+        public String getBirthDateString() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            if (is3lines) {
+                return mMRZ[1].substring(0, 6);
+            } else {
+                return mMRZ[1].substring(13, 19);
+            }
+        }
+
+        public Date getBirthDate() {
+            return parseDate(getBirthDateString());
+        }
+
+        public String getValidityDateString() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            if (is3lines) {
+                return mMRZ[1].substring(8, 14);
+            } else {
+                return mMRZ[1].substring(21, 27);
+            }
+        }
+
+        public Date getValidityDate() {
+            return parseDate(getValidityDateString());
+        }
+
+
+        public String getGender() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            if (is3lines) {
+                return mMRZ[1].substring(7, 8);
+            } else {
+                return mMRZ[1].substring(20, 21);
+            }
+        }
+
+        public String getNationality() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            if (is3lines) {
+                return mMRZ[1].substring(15, 18);
+            } else {
+                return mMRZ[1].substring(10, 13);
+            }
+        }
+
+        public String getIssuingState() {
+            if (mMRZ == null) {
+                return "";
+            }
+
+            return mMRZ[0].substring(2, 5);
+        }
+
+        private String[] mMRZ;
+        private boolean is3lines;
+
+        private String extractControlInfo() {
+            String MRZInfo = "";
+
+            if (!is3lines) {
+                if (mMRZ != null) {
+                    MRZInfo = mMRZ[1].substring(0, 10) + mMRZ[1].substring(13, 20) + mMRZ[1].substring(21, 28);
+                }
+            } else {
+                if (mMRZ != null) {
+                    MRZInfo = mMRZ[0].substring(5, 15) + mMRZ[1].substring(0, 7) + mMRZ[1].substring(8, 15);
+                }
+            }
+
+            return MRZInfo;
+        }
+
+        private String injectControlInfo(final String info)
+        {
+            if (mMRZ != null)
+            {
+                if (!is3lines)
+                {
+                    mMRZ[1] = info.substring(0, 10) + mMRZ[1].substring(10, 13) + info.substring(10, 17) + mMRZ[1].substring(20, 21) + info.substring(17) + mMRZ[1].substring(28);
+                }
+                else
+                {
+                    mMRZ[0] = mMRZ[0].substring(0, 5) + info.substring(0, 10) + mMRZ[0].substring(15);
+                    mMRZ[1] = info.substring(10, 17) + mMRZ[1].substring(7, 8) + info.substring(17, 24) + mMRZ[1].substring(15);
+                }
+            }
+            return null;
+        }
+
+        private int getCrc(byte[] data) {
+            int[] MULT = new int[]{7, 3, 1};
+            int crc = 0;
+            int i;
+            for (i = 0; i < data.length; ++i) {
+                if (data[i] != '<') {
+                    // Test if the character is an alpha or a digit
+                    if (data[i] < 'A') {
+                        crc += (data[i] - (byte) 0x30) * MULT[i % 3];
+                    } else {
+                        // Values for alpha start at 10
+                        crc += (data[i] - (byte) 0x37) * MULT[i % 3];
+                    }
+                }
+            }
+
+            return crc % 10;
+        }
+
+        @SuppressLint("NewApi")
+        private Date parseDate(String date) {
+            if ("".equals(date)) {
+                return null;
+            }
+            try {
+                return new SimpleDateFormat("yyMMdd", Locale.ENGLISH).parse(date);
+            } catch (ParseException e) {
+                return null;
+            } catch (java.text.ParseException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        private List<String> getVariations(String value)
+        {
+            return getVariations(value, -1, null);
+        }
+
+        private List<String> getVariations(String value, int prevIndex, List<String> target)
+        {
+            if (target == null)
+            {
+                target = new ArrayList<>();
+            }
+            if (value == null || value.length() == 0)
+            {
+                return target;
+            }
+            String nextVariation = null;
+            if (prevIndex > -1)
+            {
+                nextVariation = (prevIndex == 0 ? "" : value.substring(0, prevIndex))
+                        + (value.charAt(prevIndex) == '0' ? 'O' : '0')
+                        + ((prevIndex >= value.length() - 1) ? "" : value.substring(prevIndex + 1));
+                target.add(nextVariation);
+            }
+            int nextIndex = -1;
+            for (int i = prevIndex + 1; i < value.length() && nextIndex < 0; i++) {
+                if (value.charAt(i) == '0' || value.charAt(i) == 'O') {
+                    nextIndex = i;
+                }
+            }
+            if (nextIndex > -1)
+            {
+                getVariations(value, nextIndex, target);
+                if (nextVariation != null)
+                {
+                    getVariations(nextVariation, nextIndex, target);
+                }
+            }
+            return target;
+        }
+
+        private boolean verifyCrcWithCorrection() {
+            if (verifyCrc()) {
+                return true;
+            }
+            for (String variation : getVariations(extractControlInfo())) {
+                if (verifyCrc(variation)) {
+                    injectControlInfo(variation);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean verifyCrc(String controlInfo) {
+            try {
+                if (Integer.parseInt(String.valueOf(controlInfo.charAt(9))) != getCrc(controlInfo.substring(0, 9).getBytes())) {
+                    return false;
+                }
+                if (Integer.parseInt(String.valueOf(controlInfo.charAt(16))) != getCrc(controlInfo.substring(10, 16).getBytes())) {
+                    return false;
+                }
+                if (Integer.parseInt(String.valueOf(controlInfo.charAt(23))) != getCrc(controlInfo.substring(17, 23).getBytes())) {
+                    return false;
+                }
+            } catch (NumberFormatException e){
+                return false;
+            }
+            return true;
+        }
+
+    }
+
+    protected void showMessage(final String messageLabel, final String messageDefault, final Throwable e) {
+        //Logger.getInstance().write(messageDefault);
+        //Logger.getInstance().write(e);
+        //translate(messageLabel, messageDefault, new SuccessHandler<String>() {
+        //    @Override
+        //    public void onSuccess(String data) {
+        //        showMessage(data, e, false);
+        //    }
+        //});
+    }
+
+    protected void showMessage(final String messageLabel, final String messageDefault) {
+        //Logger.getInstance().write(messageDefault);
+        //translate(messageLabel, messageDefault, new SuccessHandler<String>() {
+        //    @Override
+        //    public void onSuccess(String data) {
+        //        showMessage(data, false);
+        //    }
+        //});
+    }
+
+    protected void showMessage(Throwable e) {
+        //showMessage(null, e, true);
+    }
+
+    private void startReadingPassport() {
+        //if (STUB_PASSPORT_READING) {
+        //    stubReadingPassport();
+        //    return;
+        //}
+
+        if (passportScanner == null || !passportScanner.hasConnection()) {
+            return; // "passportScanner is null";
+        }
+        stopReadingPassportFlag = new NotificationFlag();
+
+        new AsyncTask<Void, Integer, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
+                String[] mrz = null;
+                boolean wasIoError = false;
+                while (!stopReadingPassportFlag.isSet()) {
+                    try {
+                        mrz = passportScanner.waitMRZ(stopReadingPassportFlag);
+                    } catch (Throwable e) {
+                        if (!stopReadingPassportFlag.isSet()) {
+                            showMessage("ttErrorPassportReaderIO", "Error communicating with passport reader", e);
+                            //return "Error communicating with passport reader";
+                            try {
+                                passportScanner.resume();
+                            } catch (Throwable e1) {
+                                //Logger.getInstance().write(e1);
+                                //return "error = ";
+                             }
+                            // Avoid going into loop hitting on the same IO error over and over again
+                            if (wasIoError) {
+                                return null;
+                            } else {
+                                wasIoError = true;
+                            }
+                        }
+                    }
+
+                    if (stopReadingPassportFlag.isSet()) {
+                        return null;
+                    }
+
+                    if (mrz != null && mrz.length > 0) {
+                        try {
+                            StringBuilder logMessage = new StringBuilder();
+                            logMessage.append("Passport MRZ received:\r\n");
+                            for (String mrzi : mrz) {
+                                logMessage.append(mrzi);
+                                logMessage.append("\r\n");
+                            }
+                            //Logger.getInstance().write(logMessage.toString());
+                            final Passport passport = new Passport(mrz);
+                            if (!passport.isPassport()) {
+                                showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
+                            } else {
+                                showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
+
+                                //return passport.getDocumentNumber();
+
+                                //TaxFreeApi.getInstance().saveCustomer(passport, new WSResponseHandler<Integer>() {
+                                //    @Override
+                                //    public void onSuccess(Integer result, Header[] headers) {
+                                //        String strPassportNumber = passport.getDocumentNumber();
+                                //        cordovaWebView.loadUrl(UrlHelper.buildAfterPassportUrl(result, passport.getDocumentNumber(),
+                                //                TaxFreeApi.getInstance().getLanguages()));
+                                //    }
+
+                                //    @Override
+                                //    public void onFailure(int statusCode, String message) {
+                                //        showMessage("ttCouldNotSaveTraveler", "Could not save traveler data", message);
+                                //        if (statusCode == 401) {
+                                //            openLoginActivity();
+                                //        }
+                                //    }
+                                //});
+                            }
+                        } catch (PassportCrcException e) {
+                            showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
+                        } catch (Exception e) {
+                            showMessage(e);
+                        }
+                    }
+                }
+                return null;
+            }
+        }.execute();
+    }
+
+    public abstract class Logger {
+
+        public Logger getInstance() {
+            if (instance == null) {
+                if (LOCAL_LOG) {
+                    instance = new FileLogger();
+                } else {
+                    instance = new AuditLogger(true);
+                }
+            }
+            return instance;
+        }
+
+        public abstract void write(String text);
+
+        public void write(Throwable e) {
+            write(null, e);
+        }
+
+        public void write(String prefix, Throwable e) {
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            PrintStream ps = new PrintStream(stream);
+            e.printStackTrace(ps);
+            ps.close();
+            String msg = prefix == null ? stream.toString() : prefix + stream.toString();
+            write(msg);
+        }
+
+        private static final boolean LOCAL_LOG = false;
+        private Logger instance = null;
+    }
+
+    public class FileLogger extends Logger {
+
+        @Override
+        public void write(final String text)
+        {
+            File logFile = new File(path);
+            if (!logFile.exists())
+            {
+                try
+                {
+                    logFile.createNewFile();
+                }
+                catch (IOException e)
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            try
+            {
+                //BufferedWriter for performance, true to set append to file flag
+                BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
+                buf.append(new java.text.SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
+                buf.append(" ");
+                buf.append(text);
+                buf.append("\r\n");
+                buf.close();
+            }
+            catch (IOException e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        private static final String path = "/storage/sdcard0/eTaxFree.log";
+    }
+
+    public class AuditLogger extends Logger {
+
+        // Set isExtensive to true when there are is a lot of logging (usually during troubleshooting).
+        // The problem with Audit is that milliseconds are not logged, and frequent
+        // logging results in badly sorted messages. Extensive mode overcomes this by collecting messages
+        // to log and actually sending them in batches periodically.
+        public AuditLogger(boolean isExtensive) {
+            this.isExtensive = isExtensive;
+        }
+
+        @Override
+        public void write(String text) {
+            if (text != null) {
+                if (!isExtensive) {
+                    //TaxFreeApi.getInstance().getRepository().audit(text, "RefundAndroid");
+                    return;
+                }
+                if (!isScheduled) {
+                    isScheduled = true;
+                    messageBuilder = new StringBuilder();
+                    new Timer().schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            synchronized (this) {
+                                //TaxFreeApi.getInstance().getRepository().audit(messageBuilder.toString(), "RefundAndroid");
+                                isScheduled = false;
+                                messageBuilder = null;
+                            }
+                        }
+                    }, 3000);
+                }
+                synchronized (this) {
+                    if (messageBuilder == null) {
+                        messageBuilder = new StringBuilder();
+                    }
+                    messageBuilder.append(text);
+                    messageBuilder.append("\r\n\r\n");
+                }
+            }
+        }
+
+        private boolean isExtensive;
+        private boolean isScheduled;
+        private StringBuilder messageBuilder;
+    }
+
+
+
+/*
+    public String startReadingPassport() {
+        //if (STUB_PASSPORT_READING) {
+        //    stubReadingPassport();
+        //    return;
+        //}
+
+        if (passportScanner == null || !passportScanner.hasConnection()) {
+            return "passportScanner is null";
+        }
+        stopReadingPassportFlag = new NotificationFlag();
+
+        new AsyncTask<Object, Object, String>() {
+            @Override
+            private String doInBackground(Object... voids) { // protected
+                String[] mrz = null;
+                boolean wasIoError = false;
+                while (!stopReadingPassportFlag.isSet()) {
+                    try {
+                        mrz = passportScanner.waitMRZ(stopReadingPassportFlag);
+                    } catch (Throwable e) {
+                        if (!stopReadingPassportFlag.isSet()) {
+                            //showMessage("ttErrorPassportReaderIO", "Error communicating with passport reader", e);
+                            return "Error communicating with passport reader";
+                            try {
+                                //passportScanner.resume();
+                                passportScanner.toString();
+                            } catch (Throwable e1) {
+                                //Logger.getInstance().write(e1);
+                                return e1.getMessage();
+                            }
+                            // Avoid going into loop hitting on the same IO error over and over again
+                            if (wasIoError) {
+                                return "Error communicating with passport reader";
+                            } else {
+                                wasIoError = true;
+                            }
+                        }
+                    }
+
+                    if (stopReadingPassportFlag.isSet()) {
+                        return "";
+                    }
+
+                    if (mrz != null && mrz.length > 0) {
+                        try {
+                            StringBuilder logMessage = new StringBuilder();
+                            logMessage.append("Passport MRZ received:\r\n");
+                            for (String mrzi : mrz) {
+                                logMessage.append(mrzi);
+                                logMessage.append("\r\n");
+                            }
+                            //Logger.getInstance().write(logMessage.toString());
+                            final Passport passport = new Passport(mrz);
+                            if (!passport.isPassport()) {
+                                //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
+                                return "Document type is not passport";
+                            } else {
+                                return passport.getDocumentNumber();
+
+                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
+                                //TaxFreeApi.getInstance().saveCustomer(passport, new WSResponseHandler<Integer>() {
+                                //    @Override
+                                //    public void onSuccess(Integer result, Header[] headers) {
+                                //        String strPassportNumber = passport.getDocumentNumber();
+                                //        cordovaWebView.loadUrl(UrlHelper.buildAfterPassportUrl(result, passport.getDocumentNumber(),
+                                //                TaxFreeApi.getInstance().getLanguages()));
+                                //    }
+
+                                //    @Override
+                                //    public void onFailure(int statusCode, String message) {
+                                //        showMessage("ttCouldNotSaveTraveler", "Could not save traveler data", message);
+                                //        if (statusCode == 401) {
+                                //            openLoginActivity();
+                                //        }
+                                //    }
+                                //});
+
+                            }
+                        } catch (PassportCrcException e) {
+                            //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
+                            return "Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
+                        } catch (Exception e) {
+                            return e.getMessage();
+                            //showMessage(e);
+                        }
+                    }
+                }
+                return null;
+            }
+        }.execute();
+
+        return "";
+    }
+*/
+    //--------------------------------------------------------------------------------------------------
+
+}  // class PassportScannerPlugin
