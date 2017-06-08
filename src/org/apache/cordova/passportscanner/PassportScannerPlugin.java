@@ -187,11 +187,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
                                 resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
 
-                        passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
+                            passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
 
-                        startReadingPassport();
+                                resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
 
-                                resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection(); // passportScanner.hasConnection()
+                        String reultReadPassport = startReadingPassport();
+
+                                resultFindDevice = resultFindDevice + ", onDeviceFound reultReadPassport = " + reultReadPassport;
 
                         //addUserAgent(UrlHelper.UA_PASSPORT_READER);
                     } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
