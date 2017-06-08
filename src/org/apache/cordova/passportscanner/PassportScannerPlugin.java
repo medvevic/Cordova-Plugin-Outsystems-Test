@@ -2101,7 +2101,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
         {
             if (target == null)
             {
-                target = new ArrayList<>();
+                //target = new ArrayList<>();  error: diamond operator is not supported in -source 1.6
+                target = new ArrayList<String>();
             }
             if (value == null || value.length() == 0)
             {
