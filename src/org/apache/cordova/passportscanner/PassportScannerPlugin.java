@@ -124,6 +124,27 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
     }
 
+
+    // Called when the activity will start interacting with the user.
+     // @param multitasking		Flag indicating if multitasking is turned on for app
+    public void onResume(boolean multitasking, final CallbackContext callbackContext) {
+        this.openCallbackContext = callbackContext;
+
+
+        String resultReadPassport = "result ReadPassport is null";
+        try {
+            resultReadPassport = startReadingPassport();
+        }
+        catch (Throwable e) {
+
+        }
+        resultFindDevice = resultFindDevice + ", onDeviceFound resultReadPassport = " + resultReadPassport;
+
+        openCallbackContext.success("onResume(): " + resultFindDevice);
+
+    }
+
+
     private CallbackContext openCallbackContext;
 
     private static final String TAG = "PassportScannerPlugin";
@@ -191,16 +212,16 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
 
                                 resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
-
+/*
                         String resultReadPassport = "result ReadPassport is null";
                         try {
                             resultReadPassport = startReadingPassport();
                         }
                         catch (Throwable e) {
-
                         }
+                        resultFindDevice = resultFindDevice + ", onDeviceFound resultReadPassport = " + resultReadPassport;
+*/
 
-                                resultFindDevice = resultFindDevice + ", onDeviceFound resultReadPassport = " + resultReadPassport;
 
                         //addUserAgent(UrlHelper.UA_PASSPORT_READER);
                     } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
@@ -2236,11 +2257,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             }
                         }
                     }
-
                     if (stopReadingPassportFlag.isSet()) {
                         return "stopReadingPassportFlag.isSet()";
                     }
-
                     if (mrz != null && mrz.length > 0) {
                         try {
                             StringBuilder logMessage = new StringBuilder();
@@ -2255,25 +2274,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
                             } else {
                                 showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
-
                                 return "Passport number = " + passport.getDocumentNumber() + " Name = " + passport.getFirstName() + " " + passport.getLastName();
-
-                                //TaxFreeApi.getInstance().saveCustomer(passport, new WSResponseHandler<Integer>() {
-                                //    @Override
-                                //    public void onSuccess(Integer result, Header[] headers) {
-                                //        String strPassportNumber = passport.getDocumentNumber();
-                                //        cordovaWebView.loadUrl(UrlHelper.buildAfterPassportUrl(result, passport.getDocumentNumber(),
-                                //                TaxFreeApi.getInstance().getLanguages()));
-                                //    }
-
-                                //    @Override
-                                //    public void onFailure(int statusCode, String message) {
-                                //        showMessage("ttCouldNotSaveTraveler", "Could not save traveler data", message);
-                                //        if (statusCode == 401) {
-                                //            openLoginActivity();
-                                //        }
-                                //    }
-                                //});
                             }
                         } catch (PassportCrcException e) {
                             showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
@@ -2408,103 +2409,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
         private StringBuilder messageBuilder;
     }
 
-
-
-/*
-    public String startReadingPassport() {
-        //if (STUB_PASSPORT_READING) {
-        //    stubReadingPassport();
-        //    return;
-        //}
-
-        if (passportScanner == null || !passportScanner.hasConnection()) {
-            return "passportScanner is null";
-        }
-        stopReadingPassportFlag = new NotificationFlag();
-
-        new AsyncTask<Object, Object, String>() {
-            @Override
-            private String doInBackground(Object... voids) { // protected
-                String[] mrz = null;
-                boolean wasIoError = false;
-                while (!stopReadingPassportFlag.isSet()) {
-                    try {
-                        mrz = passportScanner.waitMRZ(stopReadingPassportFlag);
-                    } catch (Throwable e) {
-                        if (!stopReadingPassportFlag.isSet()) {
-                            //showMessage("ttErrorPassportReaderIO", "Error communicating with passport reader", e);
-                            return "Error communicating with passport reader";
-                            try {
-                                //passportScanner.resume();
-                                passportScanner.toString();
-                            } catch (Throwable e1) {
-                                //Logger.getInstance().write(e1);
-                                return e1.getMessage();
-                            }
-                            // Avoid going into loop hitting on the same IO error over and over again
-                            if (wasIoError) {
-                                return "Error communicating with passport reader";
-                            } else {
-                                wasIoError = true;
-                            }
-                        }
-                    }
-
-                    if (stopReadingPassportFlag.isSet()) {
-                        return "";
-                    }
-
-                    if (mrz != null && mrz.length > 0) {
-                        try {
-                            StringBuilder logMessage = new StringBuilder();
-                            logMessage.append("Passport MRZ received:\r\n");
-                            for (String mrzi : mrz) {
-                                logMessage.append(mrzi);
-                                logMessage.append("\r\n");
-                            }
-                            //Logger.getInstance().write(logMessage.toString());
-                            final Passport passport = new Passport(mrz);
-                            if (!passport.isPassport()) {
-                                //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
-                                return "Document type is not passport";
-                            } else {
-                                return passport.getDocumentNumber();
-
-                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
-                                //TaxFreeApi.getInstance().saveCustomer(passport, new WSResponseHandler<Integer>() {
-                                //    @Override
-                                //    public void onSuccess(Integer result, Header[] headers) {
-                                //        String strPassportNumber = passport.getDocumentNumber();
-                                //        cordovaWebView.loadUrl(UrlHelper.buildAfterPassportUrl(result, passport.getDocumentNumber(),
-                                //                TaxFreeApi.getInstance().getLanguages()));
-                                //    }
-
-                                //    @Override
-                                //    public void onFailure(int statusCode, String message) {
-                                //        showMessage("ttCouldNotSaveTraveler", "Could not save traveler data", message);
-                                //        if (statusCode == 401) {
-                                //            openLoginActivity();
-                                //        }
-                                //    }
-                                //});
-
-                            }
-                        } catch (PassportCrcException e) {
-                            //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
-                            return "Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
-                        } catch (Exception e) {
-                            return e.getMessage();
-                            //showMessage(e);
-                        }
-                    }
-                }
-                return null;
-            }
-        }.execute();
-
-        return "";
-    }
-*/
     //--------------------------------------------------------------------------------------------------
 
 }  // class PassportScannerPlugin
