@@ -150,7 +150,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private static final String TAG = "PassportScannerPlugin";
     private static final String ACTION_AVAILABLE = "available";
     private static final String ACTION_FIND_DEVICES = "findDevices";
-    private static final String ACTION_USB_PERMISSION = TAG + ".USB_PERMISSION";
+    private static final String ACTION_READ_PASSPORT = "readPassport";
+    //private static final String ACTION_USB_PERMISSION = TAG + ".USB_PERMISSION";
 
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
@@ -183,6 +184,28 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             //openCallbackContext.success("findDevices params : " + params);
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage());
+                        }
+                    }
+                });
+                return true;
+            } else if (action.equals(ACTION_READ_PASSPORT)) {
+                cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        try {
+                            String resultReadPassport = "result ReadPassport is null";
+                            try {
+                                resultReadPassport = startReadingPassport();
+                            }
+                            catch (Throwable e) {
+
+                            }
+
+                            resultFindDevice = resultFindDevice + ", onDeviceFound resultReadPassport = " + resultReadPassport;
+
+                            openCallbackContext.success("readPassport(): " + resultFindDevice);
+
+                        } catch (Exception e) {
+                            openCallbackContext.error("Error. PassportScannerPlugin -> readPassport : " + e.getMessage());
                         }
                     }
                 });
