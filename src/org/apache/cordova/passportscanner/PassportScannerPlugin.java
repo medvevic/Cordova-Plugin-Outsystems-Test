@@ -53,6 +53,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -180,7 +181,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             // Existing code
             new DeviceFinder(new DeviceFinder.EventListener() {
                 @Override
-                public void onDeviceFound(DeviceWrapper device) {
+                public void onDeviceFound(DeviceWrapper device) throws ExecutionException, InterruptedException {
                     String name = device.getName();
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
@@ -191,9 +192,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
                                 resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
 
-                        String reultReadPassport = startReadingPassport();
+                        String resultReadPassport = startReadingPassport();
 
-                                resultFindDevice = resultFindDevice + ", onDeviceFound reultReadPassport = " + reultReadPassport;
+                                resultFindDevice = resultFindDevice + ", onDeviceFound resultReadPassport = " + resultReadPassport;
 
                         //addUserAgent(UrlHelper.UA_PASSPORT_READER);
                     } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
@@ -399,7 +400,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
         String deviceName = "";
         public interface EventListener {
-            void onDeviceFound(DeviceWrapper device);
+            void onDeviceFound(DeviceWrapper device) throws ExecutionException, InterruptedException;
         }
 
         public DeviceFinder(final DeviceFinder.EventListener listener) {
@@ -484,7 +485,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             DeviceWrapper device = findDevice((UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE));
                             if (device != null) {
                                 device.setUsbConnection(usbManager.openDevice(device.getUsbDevice()));
-                                listener.onDeviceFound(device);
+                                try {
+                                    listener.onDeviceFound(device);
+                                } catch (ExecutionException e) {
+                                    e.printStackTrace();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
                     }
@@ -2192,7 +2199,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         //showMessage(null, e, true);
     }
 
-    private String startReadingPassport() {
+    private String startReadingPassport() throws ExecutionException, InterruptedException {
         //if (STUB_PASSPORT_READING) {
         //    stubReadingPassport();
         //    return;
@@ -2203,7 +2210,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
         stopReadingPassportFlag = new NotificationFlag();
 
-        AsyncTask<Void, Integer, String> res = new AsyncTask<Void, Integer, String>() {
+        String res = new AsyncTask<Void, Integer, String>() {
             @Override
             protected String doInBackground(Void... voids) {
                 String[] mrz = null;
@@ -2267,6 +2274,27 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 //        }
                                 //    }
                                 //});
+
+                                /*
+                                TaxFreeApi.getInstance().saveCustomer(passport, new WSResponseHandler<Integer>() {
+                                    @Override
+                                    public void onSuccess(Integer result, Header[] headers) {
+                                        String strPassportNumber = passport.getDocumentNumber();
+                                        cordovaWebView.loadUrl(UrlHelper.buildAfterPassportUrl(result, passport.getDocumentNumber(),
+                                                TaxFreeApi.getInstance().getLanguages()));
+                                    }
+
+                                    @Override
+                                    public void onFailure(int statusCode, String message) {
+                                        showMessage("ttCouldNotSaveTraveler", "Could not save traveler data", message);
+                                        if (statusCode == 401) {
+                                            openLoginActivity();
+                                        }
+                                    }
+                                });
+
+                                */
+
                             }
                         } catch (PassportCrcException e) {
                             showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
@@ -2279,10 +2307,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 }
                 return "while (!stopReadingPassportFlag.isSet())";
             }
-        }.execute();
+        }.execute().get();
 
 
-        return res.toString();
+        return "res = " + res;
     }
 
     public abstract class Logger {
@@ -2403,101 +2431,329 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
 
 
+//----------------------------------------------------------------------------------------------
 /*
-    public String startReadingPassport() {
-        //if (STUB_PASSPORT_READING) {
-        //    stubReadingPassport();
-        //    return;
-        //}
 
-        if (passportScanner == null || !passportScanner.hasConnection()) {
-            return "passportScanner is null";
+    public class TaxFreeApi {
+
+        private volatile TaxFreeApi instance;
+
+        public TaxFreeApi getInstance() {
+            if(instance == null) {
+                instance = new TaxFreeApi();
+            }
+            return instance;
         }
-        stopReadingPassportFlag = new NotificationFlag();
 
-        new AsyncTask<Object, Object, String>() {
-            @Override
-            private String doInBackground(Object... voids) { // protected
-                String[] mrz = null;
-                boolean wasIoError = false;
-                while (!stopReadingPassportFlag.isSet()) {
-                    try {
-                        mrz = passportScanner.waitMRZ(stopReadingPassportFlag);
-                    } catch (Throwable e) {
-                        if (!stopReadingPassportFlag.isSet()) {
-                            //showMessage("ttErrorPassportReaderIO", "Error communicating with passport reader", e);
-                            return "Error communicating with passport reader";
-                            try {
-                                //passportScanner.resume();
-                                passportScanner.toString();
-                            } catch (Throwable e1) {
-                                //Logger.getInstance().write(e1);
-                                return e1.getMessage();
+        public void login(String username, String password, final boolean isManual, final WSResponseHandler<ExecutionHeader> handler) {
+            this.userName = username;
+            this.password = password;
+            setCompany(0);
+            getAuth().login(username, password, new WSResponseHandler<OAuth>() {
+                @Override
+                public void onSuccess(OAuth result, Header[] headers) {
+                    if (repository != null) {
+                        repository.authorize(getAuth().getAccessToken());
+                    }
+                    if (refund != null) {
+                        refund.authorize(getAuth().getAccessToken());
+                    }
+                    if (isManual) {
+                        loginExpiry = new Date();
+                    }
+
+                    getRepository().executionHeader(new WSResponseHandler<ExecutionHeader>() {
+
+                        @Override
+                        public void onSuccess(ExecutionHeader result, Header[] headers) {
+                            if (isManual && result.getLoginExpiryHours() > 0) {
+                                Calendar calendar = Calendar.getInstance();
+                                calendar.add(Calendar.HOUR_OF_DAY, result.getLoginExpiryHours());
+                                loginExpiry = calendar.getTime();
                             }
-                            // Avoid going into loop hitting on the same IO error over and over again
-                            if (wasIoError) {
-                                return "Error communicating with passport reader";
-                            } else {
-                                wasIoError = true;
+                            if (handler != null) {
+                                handler.onSuccess(result, headers);
                             }
                         }
-                    }
 
-                    if (stopReadingPassportFlag.isSet()) {
-                        return "";
-                    }
-
-                    if (mrz != null && mrz.length > 0) {
-                        try {
-                            StringBuilder logMessage = new StringBuilder();
-                            logMessage.append("Passport MRZ received:\r\n");
-                            for (String mrzi : mrz) {
-                                logMessage.append(mrzi);
-                                logMessage.append("\r\n");
+                        @Override
+                        public void onFailure(int statusCode, String message) {
+                            if (handler != null) {
+                                handler.onFailure(statusCode, message);
                             }
-                            //Logger.getInstance().write(logMessage.toString());
-                            final Passport passport = new Passport(mrz);
-                            if (!passport.isPassport()) {
-                                //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
-                                return "Document type is not passport";
-                            } else {
-                                return passport.getDocumentNumber();
+                        }
+                    });
+                }
 
-                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
-                                //TaxFreeApi.getInstance().saveCustomer(passport, new WSResponseHandler<Integer>() {
-                                //    @Override
-                                //    public void onSuccess(Integer result, Header[] headers) {
-                                //        String strPassportNumber = passport.getDocumentNumber();
-                                //        cordovaWebView.loadUrl(UrlHelper.buildAfterPassportUrl(result, passport.getDocumentNumber(),
-                                //                TaxFreeApi.getInstance().getLanguages()));
-                                //    }
+                @Override
+                public void onFailure(int statusCode, String message) {
+                    if (handler != null) {
+                        handler.onFailure(statusCode, message);
+                    }
+                }
+            });
+        }
 
-                                //    @Override
-                                //    public void onFailure(int statusCode, String message) {
-                                //        showMessage("ttCouldNotSaveTraveler", "Could not save traveler data", message);
-                                //        if (statusCode == 401) {
-                                //            openLoginActivity();
-                                //        }
-                                //    }
-                                //});
+        public void setContext(Context ctx) {
+            this.context = ctx;
+            if (auth != null) {
+                auth.setContext(ctx);
+            }
+            if (repository != null) {
+                repository.setContext(ctx);
+            }
+            if (refund != null) {
+                refund.setContext(ctx);
+            }
+            languages = new Languages(null, context);
+            setLanguage(languages.getId());
+        }
 
-                            }
-                        } catch (PassportCrcException e) {
-                            //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
-                            return "Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
-                        } catch (Exception e) {
-                            return e.getMessage();
-                            //showMessage(e);
+        public Languages getLanguages() {
+            return languages;
+        }
+
+        public void setLanguages(Language[] languages) {
+            this.languages = new Languages(languages, context);
+        }
+
+        public void setLanguage(String url) {
+            if (getLanguages().setCurrentFromUrl(url)) {
+                setLanguage(getLanguages().getId());
+            }
+        }
+
+        public void setLanguage(int language) {
+            this.language = language;
+            if (repository != null) {
+                repository.setLanguage(language);
+            }
+            if (refund != null) {
+                refund.setLanguage(language);
+            }
+        }
+
+        public void setCompany(int company) {
+            this.company = company;
+            if (repository != null) {
+                repository.setCompany(company);
+            }
+            if (refund != null) {
+                refund.setCompany(company);
+            }
+        }
+
+        public int getCompany() {
+            return this.company;
+        }
+
+        public AuthService getAuth() {
+            if (auth == null) {
+                synchronized (this) {
+                    auth = new AuthService();
+                    auth.setContext(context);
+                }
+            }
+            return auth;
+        }
+
+        public RepositoryService getRepository() {
+            if (repository == null) {
+                synchronized (this) {
+                    repository = new RepositoryService();
+                    repository.setContext(context);
+                    repository.setErrorHandler(errorHandler);
+                    if (auth != null) {
+                        repository.authorize(auth.getAccessToken());
+                    }
+                    repository.setLanguage(language);
+                    repository.setCompany(company);
+                }
+            }
+            return repository;
+        }
+
+        public RefundService getRefund() {
+            if (refund == null) {
+                synchronized (this) {
+                    refund = new RefundService();
+                    refund.setContext(context);
+                    refund.setErrorHandler(errorHandler);
+                    if (auth != null && auth.getAccessToken() != null) {
+                        refund.authorize(auth.getAccessToken());
+                    }
+                    refund.setLanguage(language);
+                    refund.setCompany(company);
+                }
+            }
+            return refund;
+        }
+
+        public ExchangeService getExchange() {
+            if (exchange == null) {
+                synchronized (this) {
+                    exchange = new ExchangeService();
+                    exchange.setContext(context);
+                    exchange.setErrorHandler(errorHandler);
+                    if (auth != null && auth.getAccessToken() != null) {
+                        exchange.authorize(auth.getAccessToken());
+                    }
+                    exchange.setLanguage(language);
+                    //exchange.setCompany(company);
+                }
+            }
+            return exchange;
+        }
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public boolean isLoginExpired() {
+            return loginExpiry == null || new Date().after(loginExpiry);
+        }
+
+        private final WSErrorHandler errorHandler = new WSErrorHandler() {
+
+            @Override
+            public <T> void handle(int statusCode, String message, final Action call, final WSResponseHandler<T> responseHandler) {
+                final int originalCompany = company;
+                final int originalLanguage = language;
+                if (statusCode == 401 && !isLoginExpired()) {
+                    login(getUserName(), getPassword(), false, new WSResponseHandler<ExecutionHeader>() {
+                        @Override
+                        public void onSuccess(ExecutionHeader result, Header[] headers) {
+                            setLanguage(originalLanguage);
+                            setCompany(originalCompany);
+                            call.execute();
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, String message) {
+                            responseHandler.onFailure(statusCode, message);
+                        }
+                    });
+                } else {
+                    responseHandler.onFailure(statusCode, message);
+                }
+            }
+        };
+
+        private AuthService auth;
+        private RepositoryService repository;
+        private RefundService refund;
+        private int language;
+        private int company;
+        private Context context;
+        private Languages languages;
+        private Date loginExpiry;
+        private String userName;
+        private String password;
+        private ExchangeService exchange;
+    }
+
+//----------------------------------------------------------------------------------------------
+
+    public class Languages {
+        private Language[] languages;
+        private int virtualDirMaxLength;
+        private Language current;
+        private static final String SETTINGS_NAME = "LANGUAGE";
+        private Context context;
+
+        public Languages(Language[] languages, Context context) {
+            this.context = context;
+            this.languages = (languages == null ? defaultSet() : languages);
+            for (Language l : this.languages) {
+                if (l.getVirtualDirectory() != null && l.getVirtualDirectory().length() > virtualDirMaxLength) {
+                    virtualDirMaxLength = l.getVirtualDirectory().length();
+                }
+            }
+            readCurrentLanguage();
+        }
+
+        public boolean setCurrentFromUrl(final String url) {
+            boolean isChange = false;
+            if (languages != null) {
+                Language newLanguage = null;
+                String vDir = UrlHelper.getLanguagePartFromUrl(url, virtualDirMaxLength);
+                if (vDir != null) {
+                    for (Language l : languages) {
+                        if (vDir.equals(l.getVirtualDirectory())) {
+                            newLanguage = l;
+                        }
+                    }
+                    if (newLanguage != null) {
+                        isChange = current == null || newLanguage.getId() != current.getId();
+                        current = newLanguage;
+                        if (isChange) {
+                            writeCurrentLanguage();
                         }
                     }
                 }
-                return null;
             }
-        }.execute();
+            return isChange;
+        }
 
-        return "";
+        public String getVirtualDirectory() {
+            return current == null ? null : current.getVirtualDirectory();
+        }
+
+        public String getLocale() {
+            return current == null ? null : current.getLocale();
+        }
+
+        public int getId() {
+            return current == null ? 0 : current.getId();
+        }
+
+        private void readCurrentLanguage() {
+            if (context == null) {
+                return;
+            }
+            try {
+                String lang = new DatabaseHandler(context).getSetting(SETTINGS_NAME, null);
+                if (lang != null) {
+                    current = new Gson().fromJson(lang, Language.class);
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        private void writeCurrentLanguage() {
+            if (context == null) {
+                return;
+            }
+            try {
+                String lang = new Gson().toJson(current);
+                new DatabaseHandler(context).setSetting(SETTINGS_NAME, lang);
+            } catch (Exception e) {
+            }
+        }
+
+        private Language[] defaultSet() {
+            Language[] result = new Language[4];
+            result[0] = buildLanguage(1, "ru-RU", "ru");
+            result[1] = buildLanguage(2, "en-US", "en");
+            result[2] = buildLanguage(3, "fi-FI", "fi");
+            result[3] = buildLanguage(4, "zh-CN", "cn");
+            return  result;
+        }
+
+        private Language buildLanguage(int id, String locale, String virtualDir) {
+            Language result = new Language();
+            result.setId(id);
+            result.setLocale(locale);
+            result.setVirtualDirectory(virtualDir);
+            return result;
+        }
     }
 */
+
     //--------------------------------------------------------------------------------------------------
 
 }  // class PassportScannerPlugin
