@@ -1,6 +1,21 @@
 function PassportScannerPlugin() {
 }
 
+// Wait for device API libraries to load
+function onLoad() {
+    document.addEventListener("deviceready", onDeviceReady, false);
+}
+
+// device APIs are available
+function onDeviceReady() {
+    document.addEventListener("resume", onResume, false);
+    // Add similar listeners for other events
+}
+
+function onResume() {
+    // Handle the resume event
+}
+
 PassportScannerPlugin.prototype = {
 
   available: function (callback) {
@@ -12,7 +27,6 @@ PassportScannerPlugin.prototype = {
   findDevices: function (successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "findDevices");
   },
-
 };
 
 PassportScannerPlugin.install = function () {
