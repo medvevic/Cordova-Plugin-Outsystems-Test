@@ -277,7 +277,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
 
 
-//--------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------------------------------
     public class NotificationFlag {
@@ -2259,6 +2259,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             protected String doInBackground(Void... voids) {
                 String[] mrz = null;
                 boolean wasIoError = false;
+                int i = 0;
                 while (!stopReadingPassportFlag.isSet()) {
                     try {
                         mrz = passportScanner.waitMRZ(stopReadingPassportFlag);
@@ -2307,6 +2308,12 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             return "error = " + e.getMessage();
                         }
                     }
+                    i= i+1;
+
+                    if (i>100) {
+                        return "More then 100 iteration in loop while";
+                    }
+
                 }
                 return "while (!stopReadingPassportFlag.isSet())";
             }
