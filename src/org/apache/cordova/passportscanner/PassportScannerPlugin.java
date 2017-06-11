@@ -2274,11 +2274,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 return "error = " + e1.getMessage();
                             }
                             // Avoid going into loop hitting on the same IO error over and over again
-                            if (wasIoError) {
-                                return "Avoid going into loop hitting on the same IO error over and over again";
-                            } else {
-                                wasIoError = true;
-                            }
+                            //if (wasIoError) {
+                            //    return "Avoid going into loop hitting on the same IO error over and over again";
+                            //} else {
+                            //    wasIoError = true;
+                            //}
                         }
                     }
                     if (stopReadingPassportFlag.isSet()) {
