@@ -128,6 +128,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     // Called when the activity will start interacting with the user.
      // @param multitasking		Flag indicating if multitasking is turned on for app
     public void onResume(boolean multitasking, final CallbackContext callbackContext) {
+/*
         this.openCallbackContext = callbackContext;
 
 
@@ -138,10 +139,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
         catch (Throwable e) {
 
         }
-        resultFindDevice = resultFindDevice + ", onDeviceFound resultReadPassport = " + resultReadPassport;
+        resultFindDevice = resultFindDevice + ", onResume resultReadPassport = " + resultReadPassport;
 
         openCallbackContext.success("onResume(): " + resultFindDevice);
-
+*/
     }
 
 
@@ -200,7 +201,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
                             }
 
-                            resultFindDevice = resultFindDevice + ", onDeviceFound resultReadPassport = " + resultReadPassport;
+                            resultFindDevice = resultFindDevice + ", execute resultReadPassport = " + resultReadPassport;
 
                             openCallbackContext.success("readPassport(): " + resultFindDevice);
 
@@ -2262,11 +2263,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
                 String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen == true" :  "passportScanner.isOpen == FALSE";
                 String usb_GetVersion = "Exception getVersion()";
+                /*
                 try {
                     usb_GetVersion = passportScanner.getVersion();
                 } catch (IOException e) {
                     //e.printStackTrace();
                 }
+                */
                 int i = 0;
                 while (!stopReadingPassportFlag.isSet()) {
                     try {
