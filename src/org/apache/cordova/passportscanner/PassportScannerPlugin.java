@@ -2259,6 +2259,14 @@ public class PassportScannerPlugin extends CordovaPlugin {
             protected String doInBackground(Void... voids) {
                 String[] mrz = null;
                 boolean wasIoError = false;
+
+                String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen == true" :  "passportScanner.isOpen == FALSE";
+                String usb_GetVersion = "Exception getVersion()";
+                try {
+                    usb_GetVersion = passportScanner.getVersion();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 int i = 0;
                 while (!stopReadingPassportFlag.isSet()) {
                     try {
@@ -2311,8 +2319,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     i= i+1;
 
                     if (i>100) {
-                        String str_mrz = mrz == null ? "mrz = null" : mrz.toString();
-                        return "More then 100 iteration in loop while, mrz = " + str_mrz;
+                        String str_mrz = mrz == null ? "null" : mrz.toString();
+                        //passportScanner.getPort().open();
+                        return "More then 100 iteration in loop while, mrz = " + str_mrz + ",\r\n usb_IsOpen = " + usb_IsOpenStr + ",\r\n usb_GetVersion = " + usb_GetVersion;
                     }
 
                 }
