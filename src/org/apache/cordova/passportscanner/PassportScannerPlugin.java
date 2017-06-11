@@ -2311,7 +2311,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     i= i+1;
 
                     if (i>100) {
-                        return "More then 100 iteration in loop while";
+                        String str_mrz = mrz == null ? "mrz = null" : mrz.toString();
+                        return "More then 100 iteration in loop while, mrz = " + str_mrz;
                     }
 
                 }
