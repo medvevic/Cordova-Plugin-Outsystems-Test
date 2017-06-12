@@ -2301,11 +2301,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 passportScanner.resume();
                             } catch (Throwable e1) {
                                 //Logger.getInstance().write(e1);
-                                return "error = " + e1.getMessage();
+                                return "startReadingPassport(), 2304 Throwable: " + e1.getMessage();
                             }
                             // Avoid going into loop hitting on the same IO error over and over again
                             if (wasIoError) {
-                                return "Avoid going into loop hitting on the same IO error over and over again";
+                                return "startReadingPassport(), 2308 wasIoError: Avoid going into loop hitting on the same IO error over and over again";
                             } else {
                                 wasIoError = true;
                             }
@@ -2326,16 +2326,17 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             final Passport passport = new Passport(mrz);
                             if (!passport.isPassport()) {
                                 showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
+                                return "Document type is not passport";
                             } else {
                                 showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
                                 return "Passport number = " + passport.getDocumentNumber() + " Name = " + passport.getFirstName() + " " + passport.getLastName();
                             }
                         } catch (PassportCrcException e) {
                             showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
-                            return "Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
+                            return "PassportCrcException: Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
                         } catch (Exception e) {
                             showMessage(e);
-                            return "error = " + e.getMessage();
+                            return "Exception: " + e.getMessage();
                         }
                     }
                     i= i+1;
