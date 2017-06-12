@@ -2270,6 +2270,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
                 String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen1 == true" :  "passportScanner.isOpen1 == FALSE";
 
+
                 if (!passportScanner.isOpen()) {
                     try {
                         passportScanner.resume();
@@ -2303,11 +2304,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 return "error = " + e1.getMessage();
                             }
                             // Avoid going into loop hitting on the same IO error over and over again
-                            //if (wasIoError) {
-                            //    return "Avoid going into loop hitting on the same IO error over and over again";
-                            //} else {
-                            //    wasIoError = true;
-                            //}
+                            if (wasIoError) {
+                                return "Avoid going into loop hitting on the same IO error over and over again";
+                            } else {
+                                wasIoError = true;
+                            }
                         }
                     }
                     if (stopReadingPassportFlag.isSet()) {
