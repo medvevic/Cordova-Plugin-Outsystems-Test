@@ -190,7 +190,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 });
                 return true;
             } else if (action.equals(ACTION_READ_PASSPORT)) {
-                resultFindDevice = "";
+                //resultFindDevice = "";
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
