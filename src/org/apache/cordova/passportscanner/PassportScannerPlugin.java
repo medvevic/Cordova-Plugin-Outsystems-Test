@@ -2267,6 +2267,15 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
                 String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
                 String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen == true" :  "passportScanner.isOpen == FALSE";
+
+                if (!passportScanner.isOpen()) {
+                    try {
+                        passportScanner.resume();
+                    } catch (IOException e) {
+                        //e.printStackTrace();
+                        return "passportScanner.resume() IOException !!!!";
+                    }
+                }
                 //String usb_GetVersion = "Exception getVersion()";
                 /*
                 try {
@@ -2342,6 +2351,23 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
         return res;
     }
+
+/*
+    public void reconnect() {
+        passportScanner.stopIoManager();
+            try {
+                passportScanner.getPort().open(connection);
+            } catch (IOException e) {
+                // open method throws exception if the port is already open!
+                if (e.getMessage() == null || !e.getMessage().contains("Already open")) {
+                    throw e;
+                }
+            }
+        passportScanner.startIoManager();
+        passportScanner.isOpen = true;
+    }
+*/
+
 
     public abstract class Logger {
 
