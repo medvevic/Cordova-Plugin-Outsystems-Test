@@ -190,9 +190,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 });
                 return true;
             } else if (action.equals(ACTION_READ_PASSPORT)) {
+                resultFindDevice = "";
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
-                        resultFindDevice = "";
                         try {
                             String resultReadPassport = "result ReadPassport is null";
                             try {
@@ -1827,10 +1827,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
             }
         }
 
-        public void resume() throws IOException {
+        public String resume() throws IOException {
             synchronized (this) {
                 if (getPort() == null) {
-                    throw new IOException("Device unavailable.");
+                    return "resume() getPort() == null";
+                    //throw new IOException("Device unavailable.");
                 }
                 stopIoManager();
                 try {
@@ -1838,12 +1839,14 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 } catch (IOException e) {
                     // open method throws exception if the port is already open!
                     if (e.getMessage() == null || !e.getMessage().contains("Already open")) {
-                        throw e;
+                        return "resume() e.getMessage() == null || !e.getMessage().contains(\"Already open\")";
+                        //throw e;
                     }
                 }
                 startIoManager();
                 isOpen = true;
             }
+            return "resume() end";
         }
 
         public boolean isOpen() {
