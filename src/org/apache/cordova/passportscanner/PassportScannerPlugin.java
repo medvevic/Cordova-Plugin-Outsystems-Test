@@ -192,6 +192,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             } else if (action.equals(ACTION_READ_PASSPORT)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
+                        resultFindDevice = "";
                         try {
                             String resultReadPassport = "result ReadPassport is null";
                             try {
@@ -1827,7 +1828,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
 
         public void resume() throws IOException {
-            /*
             synchronized (this) {
                 if (getPort() == null) {
                     throw new IOException("Device unavailable.");
@@ -1844,7 +1844,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 startIoManager();
                 isOpen = true;
             }
-            */
         }
 
         public boolean isOpen() {
@@ -2266,7 +2265,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 //usbSerialDriver == null || usbSerialDriver.getPorts() == null || usbSerialDriver.getPorts().isEmpty()
 
                 String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
-                String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen == true" :  "passportScanner.isOpen == FALSE";
+                String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen1 == true" :  "passportScanner.isOpen1 == FALSE";
 
                 if (!passportScanner.isOpen()) {
                     try {
@@ -2276,6 +2275,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         return "passportScanner.resume() IOException !!!!";
                     }
                 }
+                String usb_IsOpenStr2 = passportScanner.isOpen() == true? "passportScanner.isOpen2 == true" :  "passportScanner.isOpen2 == FALSE";
+
                 //String usb_GetVersion = "Exception getVersion()";
                 /*
                 try {
