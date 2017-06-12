@@ -2261,8 +2261,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 String[] mrz = null;
                 boolean wasIoError = false;
 
+                String usb_mScannerVersion = passportScanner.mScannerVersion;
+                //passportScanner.getPort();
+                //usbSerialDriver == null || usbSerialDriver.getPorts() == null || usbSerialDriver.getPorts().isEmpty()
+
+                String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
                 String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen == true" :  "passportScanner.isOpen == FALSE";
-                String usb_GetVersion = "Exception getVersion()";
+                //String usb_GetVersion = "Exception getVersion()";
                 /*
                 try {
                     usb_GetVersion = passportScanner.getVersion();
@@ -2324,7 +2329,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     if (i>100) {
                         String str_mrz = mrz == null ? "null" : mrz.toString();
                         //passportScanner.getPort().open();
-                        return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr + ", usb_GetVersion = " + usb_GetVersion;
+                        //return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr + ", usb_GetVersion = " + usb_GetVersion;
+                        return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
+                                ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr;
                     }
 
                 }
