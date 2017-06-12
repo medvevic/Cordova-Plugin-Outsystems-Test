@@ -190,21 +190,19 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 });
                 return true;
             } else if (action.equals(ACTION_READ_PASSPORT)) {
-                //resultFindDevice = "";
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
-                            String resultReadPassport = "result ReadPassport is null";
+                            String resultReadPassport = ""; 
                             try {
                                 resultReadPassport = startReadingPassport();
                             }
                             catch (Throwable e) {
-
+                                resultReadPassport = "Throwable Exception";
                             }
-
-                            resultFindDevice = resultFindDevice + ", execute resultReadPassport = " + resultReadPassport;
-
-                            openCallbackContext.success("readPassport(): " + resultFindDevice);
+                            //resultFindDevice = resultFindDevice + ", execute resultReadPassport = " + resultReadPassport;
+                            //openCallbackContext.success("readPassport(): " + resultFindDevice);
+                            openCallbackContext.success(resultReadPassport);
 
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> readPassport : " + e.getMessage());
@@ -232,11 +230,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
-                                resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
+                                //resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
 
                             passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
 
-                                resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
+                                //resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
 /*
                         String resultReadPassport = "result ReadPassport is null";
                         try {
@@ -2279,7 +2277,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         return "passportScanner.resume() IOException !!!!";
                     }
                 }
-                String usb_IsOpenStr2 = passportScanner.isOpen() == true? "passportScanner.isOpen2 == true" :  "passportScanner.isOpen2 == FALSE";
+                //String usb_IsOpenStr2 = passportScanner.isOpen() == true? "passportScanner.isOpen2 == true" :  "passportScanner.isOpen2 == FALSE";
 
                 //String usb_GetVersion = "Exception getVersion()";
                 /*
@@ -2329,7 +2327,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 return "Document type is not passport";
                             } else {
                                 showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
-                                return "Passport number = " + passport.getDocumentNumber() + " Name = " + passport.getFirstName() + " " + passport.getLastName();
+                                //return "Passport number = " + passport.getDocumentNumber() + " Name = " + passport.getFirstName() + " " + passport.getLastName();
+                                return  "^" + passport.getDocumentType() + "^" + passport.getDocumentNumber() + "^" + passport.getFirstName() + "^" + passport.getLastName()
+                                        + "^" + passport.getGender() + "^" + passport.getBirthDateString() + "^" + passport.getIssuingState() + "^" + passport.getNationality()
+                                        + "^" + passport.getValidityDateString() + "^" + passport.getValidityDateString();
                             }
                         } catch (PassportCrcException e) {
                             showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
