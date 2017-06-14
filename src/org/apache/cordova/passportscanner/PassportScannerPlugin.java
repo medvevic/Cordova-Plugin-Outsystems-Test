@@ -152,26 +152,15 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private static final String ACTION_AVAILABLE = "available";
     private static final String ACTION_FIND_DEVICES = "findDevices";
     private static final String ACTION_READ_PASSPORT = "readPassport";
-    //private static final String ACTION_USB_PERMISSION = TAG + ".USB_PERMISSION";
 
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
             throws JSONException {
-        //   final JSONObject params = args.getJSONObject(ARG_INDEX_PARAMS); // <- returns JSON error!!!!
-        //    final CordovaArgs finalArgs = args;
-        //    Log.d(TAG, "Action: " + action + " params: " + params);
         Log.d(TAG, "Action: " + action);
         this.openCallbackContext = callbackContext;
 
         try {
-            //if (action.equals(ACTION_SWITCH_ON)) {
-            //} else if (action.equals(ACTION_SWITCH_OFF)) {
-
-            if ("hasUsbHostFeature".equals(action)) {
-                boolean usbHostFeature = cordova.getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, usbHostFeature));
-                return true;
-            } else if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
+            if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
                 openCallbackContext.success(1);
                 return true;
             } else if (action.equals(ACTION_FIND_DEVICES)) {
@@ -179,10 +168,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     public void run() {
                         try {
                             String passportScannerStr = passportScanner == null ? "passportScanner=null" : passportScanner.toString();
-                            //openCallbackContext.success("findDevices : " + passportScannerStr + " " + result);
-                            //openCallbackContext.success("findDevices(): " + findDevices() + ", args = " + args);
                             openCallbackContext.success("findDevices(): " + findDevices());
-                            //openCallbackContext.success("findDevices params : " + params);
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage());
                         }
@@ -195,7 +181,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         try {
                             String resultReadPassport = "";
                             try {
-                                findDevices();  //passportScanner.hasConnection()
+                                //findDevices();  //passportScanner.hasConnection()
                                 resultReadPassport = startReadingPassport();
                             }
                             catch (Throwable e) {
@@ -232,22 +218,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
                                 //resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
-
-                            passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
-
+                        passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
+                        resultFindDevice = passportScanner.hasConnection() == true ? "1^" : "0^";
                                 //resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
-/*
-                        String resultReadPassport = "result ReadPassport is null";
-                        try {
-                            resultReadPassport = startReadingPassport();
-                        }
-                        catch (Throwable e) {
-                        }
-                        resultFindDevice = resultFindDevice + ", onDeviceFound resultReadPassport = " + resultReadPassport;
-*/
-
-
-                        //addUserAgent(UrlHelper.UA_PASSPORT_READER);
                     } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
                         // TODO: there must be separate printer for sticker
                         //escPosPrinter = new EscPosPrinter(device.getUsbDevice(), device.getUsbConnection(), 58);
@@ -270,15 +243,106 @@ public class PassportScannerPlugin extends CordovaPlugin {
         return resultFindDevice;
     }
 
+    //--------------------------------------------------------------------------------------------------
 
-    // Used when instantiated via reflection by PluginManager
-    public PassportScannerPlugin() {
+    private String startReadingPassport() throws ExecutionException, InterruptedException {
+
+        if (passportScanner == null || !passportScanner.hasConnection()) {
+            return "0^startReadingPassport | passportScanner is null";
+        }
+        stopReadingPassportFlag = new NotificationFlag();
+
+        String res = new AsyncTask<Void, Integer, String>() {
+            @Override
+            protected String doInBackground(Void... voids) {
+                String[] mrz = null;
+                boolean wasIoError = false;
+
+                String usb_mScannerVersion = passportScanner.mScannerVersion;
+                String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
+                String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen1 == true" :  "passportScanner.isOpen1 == FALSE";
+
+                if (!passportScanner.isOpen()) {
+                    try {
+                        passportScanner.resume();  // very important method !!!!!!
+                    } catch (IOException e) {
+                        return "0^startReadingPassport | IOException : passportScanner.resume() ";
+                    }
+                }
+
+                int i = 0;
+                while (!stopReadingPassportFlag.isSet()) {
+                    try {
+                        mrz = passportScanner.waitMRZ(stopReadingPassportFlag);
+                    } catch (Throwable e) {
+                        if (!stopReadingPassportFlag.isSet()) {
+                            //showMessage("ttErrorPassportReaderIO", "Error communicating with passport reader", e);
+                            //return "Error communicating with passport reader";
+                            try {
+                                passportScanner.resume();
+                            } catch (Throwable e1) {
+                                //Logger.getInstance().write(e1);
+                                return "0^startReadingPassport(), Throwable: " + e1.getMessage();
+                            }
+                            // Avoid going into loop hitting on the same IO error over and over again
+                            if (wasIoError) {
+                                return "0^startReadingPassport(), wasIoError: Avoid going into loop hitting on the same IO error over and over again";
+                            } else {
+                                wasIoError = true;
+                            }
+                        }
+                    }
+                    if (stopReadingPassportFlag.isSet()) {
+                        return "0^startReadingPassport | stopReadingPassportFlag.isSet()";
+                    }
+                    if (mrz != null && mrz.length > 0) {
+                        try {
+                            StringBuilder logMessage = new StringBuilder();
+                            logMessage.append("Passport MRZ received:\r\n");
+                            for (String mrzi : mrz) {
+                                logMessage.append(mrzi);
+                                logMessage.append("\r\n");
+                            }
+                            //Logger.getInstance().write(logMessage.toString());
+                            final Passport passport = new Passport(mrz);
+                            if (!passport.isPassport()) {
+                                //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
+                                return "0^startReadingPassport | Document type is not passport ";
+                            } else {
+                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
+                                return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
+                                        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
+                                // + passport.getValidityDate().toString() + "^" + passport.getBirthDate().toString() + "^";
+                            }
+                        } catch (PassportCrcException e) {
+                            //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
+                            return "0^startReadingPassport | PassportCrcException : Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
+                        } catch (Exception e) {
+                            //showMessage(e);
+                            return "0^startReadingPassport | Exception : " + e.getMessage();
+                        }
+                    }
+                    i= i+1;
+
+                    if (i>100) {
+                        String str_mrz = mrz == null ? "null" : mrz.toString();
+                        //passportScanner.getPort().open();
+                        //return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr + ", usb_GetVersion = " + usb_GetVersion;
+                        return "0^startReadingPassport | More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
+                                ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr;
+                    }
+
+                }
+                return "0^startReadingPassport while (!stopReadingPassportFlag.isSet())";
+            }
+        }.execute().get();
+
+
+        return res;
     }
 
-
-
-
-    //--------------------------------------------------------------------------------------------------
+    public PassportScannerPlugin() {
+    }
 
     //--------------------------------------------------------------------------------------------------
     public class NotificationFlag {
@@ -2244,128 +2308,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
     protected void showMessage(Throwable e) {
         //showMessage(null, e, true);
     }
-
-    private String startReadingPassport() throws ExecutionException, InterruptedException {
-        //if (STUB_PASSPORT_READING) {
-        //    stubReadingPassport();
-        //    return;
-        //}
-
-        if (passportScanner == null || !passportScanner.hasConnection()) {
-            return "passportScanner is null";
-        }
-        stopReadingPassportFlag = new NotificationFlag();
-
-        String res = new AsyncTask<Void, Integer, String>() {
-            @Override
-            protected String doInBackground(Void... voids) {
-                String[] mrz = null;
-                boolean wasIoError = false;
-
-                String usb_mScannerVersion = passportScanner.mScannerVersion;
-                //passportScanner.getPort();
-                //usbSerialDriver == null || usbSerialDriver.getPorts() == null || usbSerialDriver.getPorts().isEmpty()
-
-                String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
-                String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen1 == true" :  "passportScanner.isOpen1 == FALSE";
-
-
-                if (!passportScanner.isOpen()) {
-                    try {
-                        passportScanner.resume();
-                    } catch (IOException e) {
-                        //e.printStackTrace();
-                        return "0^2277 | IOException : passportScanner.resume() ";
-                    }
-                }
-
-                int i = 0;
-                while (!stopReadingPassportFlag.isSet()) {
-                    try {
-                        mrz = passportScanner.waitMRZ(stopReadingPassportFlag);
-                    } catch (Throwable e) {
-                        if (!stopReadingPassportFlag.isSet()) {
-                            showMessage("ttErrorPassportReaderIO", "Error communicating with passport reader", e);
-                            //return "Error communicating with passport reader";
-                            try {
-                                passportScanner.resume();
-                            } catch (Throwable e1) {
-                                //Logger.getInstance().write(e1);
-                                return "0^2293 | startReadingPassport(), Throwable: " + e1.getMessage();
-                            }
-                            // Avoid going into loop hitting on the same IO error over and over again
-                            if (wasIoError) {
-                                return "0^2297 | startReadingPassport(), wasIoError: Avoid going into loop hitting on the same IO error over and over again";
-                            } else {
-                                wasIoError = true;
-                            }
-                        }
-                    }
-                    if (stopReadingPassportFlag.isSet()) {
-                        return "0^2304 | stopReadingPassportFlag.isSet()";
-                    }
-                    if (mrz != null && mrz.length > 0) {
-                        try {
-                            StringBuilder logMessage = new StringBuilder();
-                            logMessage.append("Passport MRZ received:\r\n");
-                            for (String mrzi : mrz) {
-                                logMessage.append(mrzi);
-                                logMessage.append("\r\n");
-                            }
-                            //Logger.getInstance().write(logMessage.toString());
-                            final Passport passport = new Passport(mrz);
-                            if (!passport.isPassport()) {
-                                showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
-                                return "0^2318| Document type is not passport ";
-                            } else {
-                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
-                                return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
-                                        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
-                                        // + passport.getValidityDate().toString() + "^" + passport.getBirthDate().toString() + "^";
-                            }
-                        } catch (PassportCrcException e) {
-                            //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
-                            return "0^2327 | PassportCrcException : Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
-                        } catch (Exception e) {
-                            showMessage(e);
-                            return "0^2330 | Exception : " + e.getMessage();
-                        }
-                    }
-                    i= i+1;
-
-                    if (i>100) {
-                        String str_mrz = mrz == null ? "null" : mrz.toString();
-                        //passportScanner.getPort().open();
-                        //return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr + ", usb_GetVersion = " + usb_GetVersion;
-                        return "0^2339 | More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
-                                ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr;
-                    }
-
-                }
-                return "0^2354 while (!stopReadingPassportFlag.isSet())";
-            }
-        }.execute().get();
-
-
-        return res;
-    }
-
-/*
-    public void reconnect() {
-        passportScanner.stopIoManager();
-            try {
-                passportScanner.getPort().open(connection);
-            } catch (IOException e) {
-                // open method throws exception if the port is already open!
-                if (e.getMessage() == null || !e.getMessage().contains("Already open")) {
-                    throw e;
-                }
-            }
-        passportScanner.startIoManager();
-        passportScanner.isOpen = true;
-    }
-*/
-
 
     public abstract class Logger {
 
