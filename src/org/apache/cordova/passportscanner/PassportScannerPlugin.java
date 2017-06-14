@@ -2319,8 +2319,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             } else {
                                 //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
                                 return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
-                                        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender()
-                                        + "^" + passport.getValidityDate().toString() + "^" + passport.getBirthDate().toString() + "^";
+                                        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
+                                        // + passport.getValidityDate().toString() + "^" + passport.getBirthDate().toString() + "^";
                             }
                         } catch (PassportCrcException e) {
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
