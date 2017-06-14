@@ -195,6 +195,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         try {
                             String resultReadPassport = "";
                             try {
+                                findDevices();  //passportScanner.hasConnection()
                                 resultReadPassport = startReadingPassport();
                             }
                             catch (Throwable e) {
@@ -230,11 +231,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
-                                resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
+                                //resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
 
                             passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
 
-                                resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
+                                //resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
 /*
                         String resultReadPassport = "result ReadPassport is null";
                         try {
