@@ -92,7 +92,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private View errorView;
     private PassportScanner passportScanner;
     private String resultFindDevice;
-    private Boolean isDeviceFound;
+    private Boolean isDeviceFound = false;
 
     //private TscPrinter tscPrinter;
     private String lastUrl;
@@ -207,24 +207,20 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     private Boolean findDevices() {
         try {
-            isDeviceFound = false;
-
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
-            //resultFindDevice = barcodeReaderDevice.getName();
-            // Existing code
             new DeviceFinder(new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
                     String name = device.getName();
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
-                        //addUserAgent(UrlHelper.UA_BARCODE_READER);
-                    } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
+                    }
+                    else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
                         //resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
 
                         passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
 
-                        resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
+                        //resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
 
                         isDeviceFound = true;
 
@@ -245,7 +241,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
         }
         catch (Throwable e) {
-            return isDeviceFound;
+            return false;
             //return resultFindDevice + e.getMessage();
         }
         return isDeviceFound;
