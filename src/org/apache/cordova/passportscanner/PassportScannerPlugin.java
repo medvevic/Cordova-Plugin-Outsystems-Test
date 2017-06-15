@@ -168,7 +168,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
-                            openCallbackContext.success(findDevices() == true ? 1 :0);  // "findDevices(): " + findDevices()
+                            //openCallbackContext.success(findDevices() == true ? 1 :0);  // "findDevices(): " + findDevices()
+                            openCallbackContext.success("findDevices(): " + findDevices());  // "findDevices(): " + findDevices()
                         } catch (Exception e) {
                             openCallbackContext.error(0); // "Error. PassportScannerPlugin -> findDevices : " + e.getMessage()
                         }
@@ -204,7 +205,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         return false;
     }
 
-    private Boolean findDevices() {
+    private String findDevices() {
         try {
             isDeviceFound = false;
 
@@ -223,7 +224,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
                         passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
 
-                        //resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
+                        resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
 
                         isDeviceFound = true;
 
@@ -244,9 +245,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
             // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
         }
         catch (Throwable e) {
-            return isDeviceFound; // //return resultFindDevice + e.getMessage();
+            //return isDeviceFound;
+            return resultFindDevice + e.getMessage();
         }
-        return isDeviceFound;  // resultFindDevice
+        return resultFindDevice;  //   isDeviceFound
     }
 
     //--------------------------------------------------------------------------------------------------
