@@ -151,7 +151,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     private static final String TAG = "PassportScannerPlugin";
     private static final String ACTION_AVAILABLE = "available";
-    //private static final String ACTION_FIND_DEVICES = "findDevices";
+    private static final String ACTION_FIND_DEVICES = "isDeviceFound";
     private static final String ACTION_READ_PASSPORT = "readPassport";
 
     @Override
@@ -164,7 +164,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
                 openCallbackContext.success(1);
                 return true;
-            } else if ("isDeviceFound".equals(action)) {   // action.equals(ACTION_FIND_DEVICES)
+            } else if (action.equals(ACTION_FIND_DEVICES)) {   //    "isDeviceFound".equals(action)
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
