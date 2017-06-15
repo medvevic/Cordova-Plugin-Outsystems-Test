@@ -56,6 +56,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class PassportScannerPlugin extends CordovaPlugin {
 
@@ -93,9 +94,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private PassportScanner passportScanner;
     private String resultFindDevice;
     private Boolean isDeviceFound = false;
+    private Boolean DoReadingPassport = true;
 
     //private TscPrinter tscPrinter;
-    private String lastUrl;
 
     //------------------------------- New for work from Outsystems
 
@@ -183,7 +184,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             String resultReadPassport = "";
                             try {
                                 //findDevices();  //passportScanner.hasConnection()
-                                resultReadPassport = startReadingPassport();
+                                while (DoReadingPassport) {
+                                    resultReadPassport = startReadingPassport();
+                                    TimeUnit.SECONDS.sleep(10);
+                                }
                             }
                             catch (Throwable e) {
                                 resultReadPassport = "0^Throwable Exception";
