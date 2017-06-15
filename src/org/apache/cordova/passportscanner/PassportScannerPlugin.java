@@ -92,6 +92,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private View errorView;
     private PassportScanner passportScanner;
     private String resultFindDevice;
+    private Boolean isDeviceFound;
 
     //private TscPrinter tscPrinter;
     private String lastUrl;
@@ -167,8 +168,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
-                            String passportScannerStr = passportScanner == null ? "passportScanner=null" : passportScanner.toString();
-                            openCallbackContext.success("findDevices(): " + findDevices());
+                            openCallbackContext.success(findDevices() == true ? 1 :0);  // "findDevices(): " + findDevices()
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage());
                         }
@@ -204,8 +204,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
         return false;
     }
 
-    private String findDevices() {
+    private Boolean findDevices() {
         try {
+            isDeviceFound = false;
+
             DeviceWrapper dw = new DeviceWrapper();
             DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
             //resultFindDevice = barcodeReaderDevice.getName();
@@ -217,10 +219,14 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
                         //addUserAgent(UrlHelper.UA_BARCODE_READER);
                     } else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
-                                //resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
+                        //resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
+
                         passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
-                        resultFindDevice = passportScanner.hasConnection() == true ? "1^" : "0^";
-                                //resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
+
+                        //resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
+
+                        isDeviceFound = true;
+
                     } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
                         // TODO: there must be separate printer for sticker
                         //escPosPrinter = new EscPosPrinter(device.getUsbDevice(), device.getUsbConnection(), 58);
@@ -238,9 +244,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
             // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
         }
         catch (Throwable e) {
-            return resultFindDevice + e.getMessage();
+            return isDeviceFound; // //return resultFindDevice + e.getMessage();
         }
-        return resultFindDevice;
+        return isDeviceFound;  // resultFindDevice
     }
 
     //--------------------------------------------------------------------------------------------------
