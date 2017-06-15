@@ -168,8 +168,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
-                            //openCallbackContext.success(findDevices() == true ? 1 :0);  // "findDevices(): " + findDevices()
-                            openCallbackContext.success("findDevices(): " + findDevices());  // "findDevices(): " + findDevices()
+                            openCallbackContext.success(findDevices() == true ? 1 :0);  // "findDevices(): " + findDevices()
+                            //openCallbackContext.success("findDevices(): " + findDevices());  // "findDevices(): " + findDevices()
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage()); //
                         }
@@ -205,7 +205,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         return false;
     }
 
-    private String findDevices() {
+    private Boolean findDevices() {
         try {
             isDeviceFound = false;
 
@@ -245,10 +245,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
             // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
         }
         catch (Throwable e) {
-            //return isDeviceFound;
-            return resultFindDevice + e.getMessage();
+            return isDeviceFound;
+            //return resultFindDevice + e.getMessage();
         }
-        return resultFindDevice;  //   isDeviceFound
+        return isDeviceFound;
+        //return resultFindDevice;
     }
 
     //--------------------------------------------------------------------------------------------------
