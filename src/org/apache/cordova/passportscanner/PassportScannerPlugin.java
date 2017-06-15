@@ -170,7 +170,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         try {
                             openCallbackContext.success(findDevices() == true ? 1 :0);  // "findDevices(): " + findDevices()
                         } catch (Exception e) {
-                            openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage());
+                            openCallbackContext.error(0); // "Error. PassportScannerPlugin -> findDevices : " + e.getMessage()
                         }
                     }
                 });
