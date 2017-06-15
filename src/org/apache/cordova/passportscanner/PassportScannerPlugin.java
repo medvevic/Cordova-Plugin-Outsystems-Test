@@ -183,11 +183,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         try {
                             String resultReadPassport = "";
                             try {
-                                //findDevices();  //passportScanner.hasConnection()
-                                while (DoReadingPassport) {
-                                    resultReadPassport = startReadingPassport();
-                                    TimeUnit.SECONDS.sleep(10);
-                                }
+                                resultReadPassport = startReadingPassport();
+                                //while (DoReadingPassport) {
+                                //    TimeUnit.SECONDS.sleep(10);
+                                //}
                             }
                             catch (Throwable e) {
                                 resultReadPassport = "0^Throwable Exception";
