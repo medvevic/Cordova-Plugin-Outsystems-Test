@@ -322,8 +322,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
                                JSONObject jsonObject = new JSONObject();
                                try {
-                                   jsonObject.put("FirstName", passport);
-                                   jsonObject.put("LastName", passport);
+                                   jsonObject.put("FirstName", passport.getFirstName());
+                                   jsonObject.put("LastName", passport.getLastName());
                                    jsonObject.put("documentNumber", passport.getDocumentNumber());
                                    jsonObject.put("issuer", passport.getIssuingState());
                                    //jsonObject.put("dateOfExpiry", fh.dateToOsDateString(passport.getValidityDate()));
@@ -332,8 +332,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                    jsonObject.put("dateOfBirth", passport.getBirthDateString());
                                    jsonObject.put("nationality", passport.getNationality());
                                    jsonObject.put("sex", passport.getGender());
-                                   jsonObject.put("mrzText", passport.toString());
-                                   jsonObject.put("documentCode", passport.getDocumentType());
+                                   //jsonObject.put("mrzText", passport.toString());
+                                   //jsonObject.put("documentCode", passport.getDocumentType());
 
                                     //this.callbackContext.success(jsonObject.toString());
                                     // break;
@@ -349,7 +349,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
                                 //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
                                 //        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
-                                return  "jsonObject.toString() = " + jsonObject.toString();
+                                String jsonObjectStr =  jsonObject == null ? "jsonObject == null" : jsonObject.toString();
+                                return  "jsonObject.toString() = " + jsonObjectStr;
                             }
                         } catch (PassportCrcException e) {
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
