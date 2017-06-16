@@ -318,8 +318,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
                                 return "0^startReadingPassport | Document type is not passport ";
                             } else {
-                                FormattingHelper fh = new FormattingHelper();
-/*
+ /*
+                               FormattingHelper fh = new FormattingHelper();
                                JSONObject jsonObject = new JSONObject();
                                try {
                                    jsonObject.put("FirstName", passport.getFirstName());
@@ -335,8 +335,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                    jsonObject.put("sex", passport.getGender());
                                    //jsonObject.put("mrzText", passport.toString());
                                    //jsonObject.put("documentCode", passport.getDocumentType());
-
-
 
                                 } catch (JSONException e) {
                                     Log.e("MicroBlink", e.toString());
