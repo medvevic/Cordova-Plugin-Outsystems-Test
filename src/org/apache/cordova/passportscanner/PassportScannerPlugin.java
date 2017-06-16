@@ -33,6 +33,7 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -317,9 +318,30 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
                                 return "0^startReadingPassport | Document type is not passport ";
                             } else {
-                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");  getValidityDateOutSystems
+                                JSONObject jsonObject = new JSONObject();
+                                FormattingHelper fh = new FormattingHelper();
+                                try {
+                                    jsonObject.put("FirstName", passport);
+                                    jsonObject.put("LastName", passport);
+                                    jsonObject.put("documentNumber", passport.getDocumentNumber());
+                                    jsonObject.put("issuer", passport.getIssuingState());
+                                    jsonObject.put("dateOfExpiry", fh.dateToOsDateString(passport.getValidityDate()));
+                                    jsonObject.put("dateOfBirth", fh.dateToOsDateString(passport.getBirthDate()));
+                                    jsonObject.put("nationality", passport.getNationality());
+                                    jsonObject.put("sex", passport.getGender());
+                                    jsonObject.put("mrzText", passport.toString());
+                                    jsonObject.put("documentCode", passport.getDocumentType());
+
+                                    //this.callbackContext.success(jsonObject.toString());
+                                    // break;
+                                } catch (JSONException e) {
+                                    Log.e("MicroBlink", e.toString());
+                                }
+
+                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");  FormattingHelper.dateToOsDateString(passport.getBirthDate())
                                 return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
-                                        + "^" + passport.getValidityDateOutSystems() + "^" + passport.getBirthDateOutSystems() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
+                                        + "^" + fh.dateToOsDateString(passport.getValidityDate()) + "^" + fh.dateToOsDateString(passport.getBirthDate()) + "^" + passport.getNationality() + "^" + passport.getGender() + "^" +
+                                        jsonObject.toString();
                                 //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
                                 //        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
                             }
@@ -2458,6 +2480,37 @@ public class PassportScannerPlugin extends CordovaPlugin {
         private boolean isExtensive;
         private boolean isScheduled;
         private StringBuilder messageBuilder;
+    }
+
+    public class FormattingHelper {
+
+        public String doubleToCurrency(double value) {
+            return String.format("%.2f", value);
+        }
+
+        public String dateToChequeString(Date date) {
+            return new java.text.SimpleDateFormat("dd/MM/yyyy").format(date);
+        }
+
+        public String dateToOsDateString(Date date) {
+            return new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(date);
+        }
+
+        public Date osDateStringToDate(String date) throws java.text.ParseException {
+            return new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date);
+        }
+
+        public String osDateStringToChequeString(String value) throws java.text.ParseException {
+            return dateToChequeString(osDateStringToDate(value));
+        }
+
+        public String fillString(int num, char character) {
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < num; i++) {
+                b.append(character);
+            }
+            return b.toString();
+        }
     }
 
     //--------------------------------------------------------------------------------------------------
