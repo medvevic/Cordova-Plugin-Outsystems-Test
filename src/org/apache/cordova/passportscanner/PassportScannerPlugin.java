@@ -2229,18 +2229,21 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
 
         @SuppressLint("NewApi")
-        private String parseDateString(String date) {
-            if ("".equals(date)) {
+        private String parseDateString(String dateStr) {
+            if ("".equals(dateStr)) {
                 return null;
             }
             try {
-                return new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date).toString();
+
+                java.util.Date date = parseDate(dateStr);
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                String format = formatter.format(date);
+                return format;
+
+                //return new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date).toString();
             } catch (ParseException e) {
                 return null;
-            } catch (java.text.ParseException e) {
-                e.printStackTrace();
             }
-            return null;
         }
 
         private List<String> getVariations(String value)
