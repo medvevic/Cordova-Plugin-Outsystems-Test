@@ -323,6 +323,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                JSONObject jsonObject = new JSONObject();
                                try {
                                    jsonObject.put("FirstName", passport.getFirstName());
+                                   /*
                                    jsonObject.put("LastName", passport.getLastName());
                                    jsonObject.put("documentNumber", passport.getDocumentNumber());
                                    jsonObject.put("issuer", passport.getIssuingState());
@@ -335,8 +336,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                    //jsonObject.put("mrzText", passport.toString());
                                    //jsonObject.put("documentCode", passport.getDocumentType());
 
-                                    //this.callbackContext.success(jsonObject.toString());
-                                    // break;
+                                   */
+
                                 } catch (JSONException e) {
                                     Log.e("MicroBlink", e.toString());
                                    return  "Error. jsonObject.toString() = " + e.toString();
