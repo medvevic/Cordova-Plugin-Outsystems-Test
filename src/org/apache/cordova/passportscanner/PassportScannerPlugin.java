@@ -320,7 +320,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             } else {
                                 FormattingHelper fh = new FormattingHelper();
 
-                                JSONObject jsonObject = new JSONObject();
+                               JSONObject jsonObject = new JSONObject();
                                try {
                                    jsonObject.put("FirstName", passport);
                                    jsonObject.put("LastName", passport);
@@ -348,7 +348,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
                                 //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
                                 //        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
-                                return  jsonObject.toString();
+                                return  "jsonObject.toString() = " + jsonObject.toString();
                             }
                         } catch (PassportCrcException e) {
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
