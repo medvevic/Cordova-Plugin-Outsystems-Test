@@ -317,10 +317,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
                                 return "0^startReadingPassport | Document type is not passport ";
                             } else {
-                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");
+                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");  getValidityDateOutSystems
                                 return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
-                                        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
-                                // + passport.getValidityDate().toString() + "^" + passport.getBirthDate().toString() + "^";
+                                        + "^" + passport.getValidityDateOutSystems() + "^" + passport.getBirthDateOutSystems() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
+                                //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
+                                //        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
                             }
                         } catch (PassportCrcException e) {
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
@@ -2100,6 +2101,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
             return parseDate(getBirthDateString());
         }
 
+        public String getBirthDateOutSystems() {
+            return parseDateString(getBirthDateString());
+        }
+
         public String getValidityDateString() {
             if (mMRZ == null) {
                 return "";
@@ -2110,6 +2115,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
             } else {
                 return mMRZ[1].substring(21, 27);
             }
+        }
+
+        public String getValidityDateOutSystems() {
+            return parseDateString(getValidityDateString());
         }
 
         public Date getValidityDate() {
@@ -2211,6 +2220,21 @@ public class PassportScannerPlugin extends CordovaPlugin {
             }
             try {
                 return new SimpleDateFormat("yyMMdd", Locale.ENGLISH).parse(date);
+            } catch (ParseException e) {
+                return null;
+            } catch (java.text.ParseException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @SuppressLint("NewApi")
+        private String parseDateString(String date) {
+            if ("".equals(date)) {
+                return null;
+            }
+            try {
+                return new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date).toString();
             } catch (ParseException e) {
                 return null;
             } catch (java.text.ParseException e) {
