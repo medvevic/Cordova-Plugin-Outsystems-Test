@@ -339,6 +339,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                     // break;
                                 } catch (JSONException e) {
                                     Log.e("MicroBlink", e.toString());
+                                   return  "Error. jsonObject.toString() = " + e.toString();
                                 }
 
                                 //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");  FormattingHelper.dateToOsDateString(passport.getBirthDate())
