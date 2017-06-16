@@ -351,7 +351,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
                                 //        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
                                 String jsonObjectStr =  jsonObject == null ? "jsonObject == null" : jsonObject.toString();
-                                return  "jsonObject.toString() = " + jsonObjectStr;
+                                return  "jsonObject.toString() = ";  //  + jsonObjectStr
                             }
                         } catch (PassportCrcException e) {
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
