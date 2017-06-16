@@ -319,32 +319,36 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 return "0^startReadingPassport | Document type is not passport ";
                             } else {
                                 FormattingHelper fh = new FormattingHelper();
-/*
+
                                 JSONObject jsonObject = new JSONObject();
                                try {
-                                    jsonObject.put("FirstName", passport);
-                                    jsonObject.put("LastName", passport);
-                                    jsonObject.put("documentNumber", passport.getDocumentNumber());
-                                    jsonObject.put("issuer", passport.getIssuingState());
-                                    jsonObject.put("dateOfExpiry", fh.dateToOsDateString(passport.getValidityDate()));
-                                    jsonObject.put("dateOfBirth", fh.dateToOsDateString(passport.getBirthDate()));
-                                    jsonObject.put("nationality", passport.getNationality());
-                                    jsonObject.put("sex", passport.getGender());
-                                    jsonObject.put("mrzText", passport.toString());
-                                    jsonObject.put("documentCode", passport.getDocumentType());
+                                   jsonObject.put("FirstName", passport);
+                                   jsonObject.put("LastName", passport);
+                                   jsonObject.put("documentNumber", passport.getDocumentNumber());
+                                   jsonObject.put("issuer", passport.getIssuingState());
+                                   //jsonObject.put("dateOfExpiry", fh.dateToOsDateString(passport.getValidityDate()));
+                                   //jsonObject.put("dateOfBirth", fh.dateToOsDateString(passport.getBirthDate()));
+                                   jsonObject.put("dateOfExpiry", passport.getValidityDateString());
+                                   jsonObject.put("dateOfBirth", passport.getBirthDateString());
+                                   jsonObject.put("nationality", passport.getNationality());
+                                   jsonObject.put("sex", passport.getGender());
+                                   jsonObject.put("mrzText", passport.toString());
+                                   jsonObject.put("documentCode", passport.getDocumentType());
 
                                     //this.callbackContext.success(jsonObject.toString());
                                     // break;
                                 } catch (JSONException e) {
                                     Log.e("MicroBlink", e.toString());
                                 }
-*/
+
                                 //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");  FormattingHelper.dateToOsDateString(passport.getBirthDate())
                                 //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
                                 //        + "^" + fh.dateToOsDateString(passport.getValidityDate()) + "^" + fh.dateToOsDateString(passport.getBirthDate()) + "^" + passport.getNationality() + "^"
                                 //        + passport.getGender() + "^";
-                                return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
-                                        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
+
+                                //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
+                                //        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
+                                return  jsonObject.toString();
                             }
                         } catch (PassportCrcException e) {
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
