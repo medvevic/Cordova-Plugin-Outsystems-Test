@@ -318,7 +318,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
                                 return "0^startReadingPassport | Document type is not passport ";
                             } else {
- /*
+
                                FormattingHelper fh = new FormattingHelper();
                                JSONObject jsonObject = new JSONObject();
                                try {
@@ -340,7 +340,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                     Log.e("MicroBlink", e.toString());
                                    return  "Error. jsonObject.toString() = " + e.toString();
                                 }
-*/
+
                                 //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");  FormattingHelper.dateToOsDateString(passport.getBirthDate())
                                 //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
                                 //        + "^" + fh.dateToOsDateString(passport.getValidityDate()) + "^" + fh.dateToOsDateString(passport.getBirthDate()) + "^" + passport.getNationality() + "^"
