@@ -323,23 +323,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                JSONObject jsonObject = new JSONObject();
                                try {
                                    jsonObject.put("FirstName", passport.getFirstName());
-
                                    jsonObject.put("LastName", passport.getLastName());
                                    jsonObject.put("DocumentNumber", passport.getDocumentNumber());
                                    jsonObject.put("Issuer", passport.getIssuingState());
-                                   String dateOfExpiryStr = passport.getValidityDateString();
-                                   /*
-                                   try {
-                                       dateOfExpiryStr = new SimpleDateFormat("yyyy.MM.dd", Locale.ENGLISH).format(passport.getValidityDate());
-                                   }
-                                   catch (Exception e) {
-                                       return  "Error. jsonObject.toString() = " + e.toString();
-                                   }
-                                   */
-                                   jsonObject.put("DateOfExpiry", dateOfExpiryStr); // fh.dateToOsDateString(passport.getValidityDate()));
-                                   //jsonObject.put("dateOfBirth", fh.dateToOsDateString(passport.getBirthDate()));
-                                   //jsonObject.put("DateOfExpiry", passport.getValidityDateString());
-                                   jsonObject.put("DateOfBirth", passport.getBirthDateString());
+                                   jsonObject.put("DateOfExpiry", passportDateConvert(passport.getValidityDateString(), false)); // fh.dateToOsDateString(passport.getValidityDate()));
+                                   jsonObject.put("DateOfBirth", passportDateConvert(passport.getBirthDateString(), true));
                                    jsonObject.put("Nationality", passport.getNationality());
                                    jsonObject.put("Sex", passport.getGender());
                                    //jsonObject.put("mrzText", passport.toString());
@@ -385,6 +373,24 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
 
         return res;
+    }
+
+    private String passportDateConvert(String stringDateShort, Boolean isDateOfBirth) {
+
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        int currentYearFirst2Digits = Integer.parseInt(String.valueOf(currentYear).substring(0,2));
+        String shortYear = stringDateShort.substring(0,2);
+        String shortMonth = stringDateShort.substring(2);
+        int shortYearInt = Integer.parseInt(shortYear);
+        String fullYear = "";
+        if (isDateOfBirth == true) {
+            fullYear = shortYearInt >= currentYearFirst2Digits && shortYearInt <= 99 ? "19" + "shortYear" : "20" + "shortYear";
+        }
+        else {
+            fullYear = "20" + "shortYear";
+        }
+
+        return fullYear + "-" + shortMonth + "-" + "01";
     }
 
     public PassportScannerPlugin() {
