@@ -384,10 +384,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
         int shortYearInt = Integer.parseInt(shortYear);
         String fullYear = "";
         if (isDateOfBirth == true) {
-            fullYear = shortYearInt >= currentYearFirst2Digits && shortYearInt <= 99 ? "19" + "shortYear" : "20" + "shortYear";
+            fullYear = shortYearInt >= currentYearFirst2Digits && shortYearInt <= 99 ? "19" + shortYear : "20" + shortYear;
         }
         else {
-            fullYear = "20" + "shortYear";
+            fullYear = "20" + shortYear;
         }
 
         return fullYear + "-" + shortMonth + "-" + "01";
