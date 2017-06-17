@@ -380,7 +380,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         int currentYearFirst2Digits = Integer.parseInt(String.valueOf(currentYear).substring(0,2));
         String shortYear = stringDateShort.substring(0,2);
-        String shortMonth = stringDateShort.substring(2);
+        String shortMonth = stringDateShort.substring(2,4);
+        String shortDay = stringDateShort.substring(4);
         int shortYearInt = Integer.parseInt(shortYear);
         String fullYear = "";
         if (isDateOfBirth == true) {
@@ -390,7 +391,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             fullYear = "20" + shortYear;
         }
 
-        return fullYear + "-" + shortMonth + "-" + "01";
+        return fullYear + "-" + shortMonth + "-" + shortDay;
     }
 
     public PassportScannerPlugin() {
