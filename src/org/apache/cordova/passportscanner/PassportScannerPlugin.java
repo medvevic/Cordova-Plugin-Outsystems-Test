@@ -327,9 +327,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                    jsonObject.put("LastName", passport.getLastName());
                                    jsonObject.put("DocumentNumber", passport.getDocumentNumber());
                                    jsonObject.put("Issuer", passport.getIssuingState());
-                                   //jsonObject.put("dateOfExpiry", fh.dateToOsDateString(passport.getValidityDate()));
+                                   jsonObject.put("dateOfExpiry", new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(passport.getValidityDate())); // fh.dateToOsDateString(passport.getValidityDate()));
                                    //jsonObject.put("dateOfBirth", fh.dateToOsDateString(passport.getBirthDate()));
-                                   jsonObject.put("DateOfExpiry", passport.getValidityDateString());
+                                   //jsonObject.put("DateOfExpiry", passport.getValidityDateString());
                                    jsonObject.put("DateOfBirth", passport.getBirthDateString());
                                    jsonObject.put("Nationality", passport.getNationality());
                                    jsonObject.put("Sex", passport.getGender());
@@ -349,8 +349,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
                                 //        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
 
-                                //String jsonObjectStr =  jsonObject == null ? "jsonObject == null" : jsonObject.toString();
-                                return jsonObject.toString(); //  "jsonObject.toString() = " + jsonObjectStr;  //  + jsonObjectStr
+                                return jsonObject.toString();
                             }
                         } catch (PassportCrcException e) {
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
