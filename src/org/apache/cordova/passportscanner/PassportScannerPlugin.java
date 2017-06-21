@@ -114,6 +114,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private PendingIntent mPermissionIntent;
     private BroadcastReceiver mUsbReceiver;
     private NotificationFlag stopReadingPassportFlag;
+    JSONObject jsonObject;
 
     @Override
     public void onReset() {
@@ -260,6 +261,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             return "0^startReadingPassport | passportScanner is null";
         }
         stopReadingPassportFlag = new NotificationFlag();
+        jsonObject = new JSONObject();
 
         String res = new AsyncTask<Void, Integer, String>() {
             @Override
@@ -275,7 +277,12 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     try {
                         passportScanner.resume();  // very important method !!!!!!
                     } catch (IOException e) {
-                        return "0^startReadingPassport | IOException : passportScanner.resume() ";
+                        try {
+                            jsonObject.put("ErrorMessage", "startReadingPassport | IOException : passportScanner.resume() ");
+                        } catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                        return jsonObject.toString();
                     }
                 }
 
@@ -291,18 +298,33 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 passportScanner.resume();
                             } catch (Throwable e1) {
                                 //Logger.getInstance().write(e1);
-                                return "0^startReadingPassport(), Throwable: " + e1.getMessage();
+                                try {
+                                    jsonObject.put("ErrorMessage", "startReadingPassport(), Throwable: " + e1.getMessage());
+                                } catch (JSONException e2) {
+                                    e2.printStackTrace();
+                                }
+                                return jsonObject.toString();
                             }
                             // Avoid going into loop hitting on the same IO error over and over again
                             if (wasIoError) {
-                                return "0^startReadingPassport(), wasIoError: Avoid going into loop hitting on the same IO error over and over again";
+                                try {
+                                    jsonObject.put("ErrorMessage", "startReadingPassport(), wasIoError: Avoid going into loop hitting on the same IO error over and over again");
+                                } catch (JSONException e1) {
+                                    e1.printStackTrace();
+                                }
+                                return jsonObject.toString();
                             } else {
                                 wasIoError = true;
                             }
                         }
                     }
                     if (stopReadingPassportFlag.isSet()) {
-                        return "0^startReadingPassport | stopReadingPassportFlag.isSet()";
+                        try {
+                            jsonObject.put("ErrorMessage", "startReadingPassport | stopReadingPassportFlag.isSet()");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        return jsonObject.toString();
                     }
                     if (mrz != null && mrz.length > 0) {
                         try {
@@ -316,11 +338,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             final Passport passport = new Passport(mrz);
                             if (!passport.isPassport()) {
                                 //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
-                                return "0^startReadingPassport | Document type is not passport ";
+                                jsonObject.put("ErrorMessage", "startReadingPassport | Document type is not passport ");
+                                return jsonObject.toString();
                             } else {
 
-                               FormattingHelper fh = new FormattingHelper();
-                               JSONObject jsonObject = new JSONObject();
+                               //FormattingHelper fh = new FormattingHelper();
                                try {
                                    jsonObject.put("FirstName", passport.getFirstName());
                                    jsonObject.put("LastName", passport.getLastName());
@@ -334,8 +356,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                    //jsonObject.put("documentCode", passport.getDocumentType());
 
                                 } catch (JSONException e) {
-                                    Log.e("MicroBlink", e.toString());
-                                   return  "Error. jsonObject.toString() = " + e.toString();
+                                    Log.e("jsonObject.put", e.toString());
+                                   jsonObject.put("ErrorMessage", "Error. jsonObject.toString() = " + e.toString());
+                                   return  jsonObject.toString();
                                 }
 
                                 //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");  FormattingHelper.dateToOsDateString(passport.getBirthDate())
@@ -349,11 +372,21 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 return jsonObject.toString();
                             }
                         } catch (PassportCrcException e) {
+                            try {
+                                jsonObject.put("ErrorMessage", "startReadingPassport | PassportCrcException : Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
+                            } catch (JSONException e1) {
+                                e1.printStackTrace();
+                            }
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
-                            return "0^startReadingPassport | PassportCrcException : Document data verification failed. This can be a problem of scanning, or the document is corrupted.";
+                            return jsonObject.toString();
                         } catch (Exception e) {
                             //showMessage(e);
-                            return "0^startReadingPassport | Exception : " + e.getMessage();
+                            try {
+                                jsonObject.put("ErrorMessage", "Error. jsonObject.toString() = " + e.getMessage());
+                            } catch (JSONException e1) {
+                                e1.printStackTrace();
+                            }
+                            return jsonObject.toString();
                         }
                     }
                     i= i+1;
@@ -362,12 +395,22 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         String str_mrz = mrz == null ? "null" : mrz.toString();
                         //passportScanner.getPort().open();
                         //return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr + ", usb_GetVersion = " + usb_GetVersion;
-                        return "0^startReadingPassport | More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
-                                ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr;
+                        try {
+                            jsonObject.put("ErrorMessage", "startReadingPassport | More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
+                                    ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        return jsonObject.toString();
                     }
 
                 }
-                return "0^startReadingPassport while (!stopReadingPassportFlag.isSet())";
+                try {
+                    jsonObject.put("ErrorMessage", "startReadingPassport while (!stopReadingPassportFlag.isSet())");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                return "startReadingPassport while (!stopReadingPassportFlag.isSet())";
             }
         }.execute().get();
 
