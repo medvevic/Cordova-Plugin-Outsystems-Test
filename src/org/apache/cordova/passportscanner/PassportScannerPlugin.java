@@ -191,14 +191,20 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 //}
                             }
                             catch (Throwable e) {
-                                resultReadPassport = "0^Throwable Exception";
+                                jsonObject.put("ErrorMessage", "Throwable Exception");
+                                resultReadPassport = jsonObject.toString();
                             }
                             //resultFindDevice = resultFindDevice + ", execute resultReadPassport = " + resultReadPassport;
                             //openCallbackContext.success("readPassport(): " + resultFindDevice);
                             openCallbackContext.success(resultReadPassport);
 
                         } catch (Exception e) {
-                            openCallbackContext.error("Error. PassportScannerPlugin -> readPassport : " + e.getMessage());
+                            try {
+                                jsonObject.put("ErrorMessage", "PassportScannerPlugin -> readPassport : " + e.getMessage());
+                            } catch (JSONException e1) {
+                                e1.printStackTrace();
+                            }
+                            openCallbackContext.error(jsonObject.toString());
                         }
                     }
                 });
@@ -258,7 +264,12 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private String startReadingPassport() throws ExecutionException, InterruptedException {
 
         if (passportScanner == null || !passportScanner.hasConnection()) {
-            return "0^startReadingPassport | passportScanner is null";
+            try {
+                jsonObject.put("ErrorMessage", "startReadingPassport | passportScanner is null");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return jsonObject.toString();
         }
         stopReadingPassportFlag = new NotificationFlag();
         jsonObject = new JSONObject();
