@@ -984,7 +984,49 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
             boolean gotResponse = false;
 
-            try {
+            ScannerPacket packet = bq.poll();
+            if (cmd_code == packet.getCode())
+                gotResponse = true;
+
+            switch (packet.getCode()) {
+                case 'V':
+                    mScannerVersion = new String(packet.getData(), "ASCII");
+                    break;
+
+                case 'I':
+                    mMRZ = new String(packet.getData(), "ASCII").split("\r");
+                    break;
+                default:
+                    break;
+            }
+
+
+            //-------------------------------------------------------
+            /*
+            while (!bq.isEmpty()) {
+                if (stopFlag != null && stopFlag.isSet()) {
+                    break;
+                }
+                ScannerPacket packet = bq.poll();
+                if (cmd_code == packet.getCode())
+                    gotResponse = true;
+
+                switch (packet.getCode()) {
+                    case 'V':
+                        mScannerVersion = new String(packet.getData(), "ASCII");
+                        break;
+
+                    case 'I':
+                        mMRZ = new String(packet.getData(), "ASCII").split("\r");
+                        break;
+                    default:
+                        break;
+                }
+            }
+            */
+            //-------------------------------------------------------
+
+                /*
                 while (bq.isEmpty() && !gotResponse) {
                     if (stopFlag != null && stopFlag.isSet()) {
                         break;
@@ -1013,10 +1055,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 break;
                         }
                     }
+
                 }
-            } catch (InterruptedException e) {
-                // Ignore
-            }
+                */
+
+
             return written;
         }
 
