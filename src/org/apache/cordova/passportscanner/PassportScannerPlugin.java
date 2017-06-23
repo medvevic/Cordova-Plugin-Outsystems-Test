@@ -984,6 +984,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
             boolean gotResponse = false;
 
+/*
             ScannerPacket packet = bq.poll();
             if (cmd_code == packet.getCode())
                 gotResponse = true;
@@ -999,10 +1000,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 default:
                     break;
             }
-
+*/
 
             //-------------------------------------------------------
-            /*
             while (!bq.isEmpty()) {
                 if (stopFlag != null && stopFlag.isSet()) {
                     break;
@@ -1023,7 +1023,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         break;
                 }
             }
-            */
             //-------------------------------------------------------
 
                 /*
