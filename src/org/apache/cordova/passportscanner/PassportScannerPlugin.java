@@ -156,6 +156,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private static final String ACTION_AVAILABLE = "available";
     private static final String ACTION_FIND_DEVICES = "isDeviceFound";
     private static final String ACTION_READ_PASSPORT = "readPassport";
+    private static final String ACTION_GET_PASSPORT_DATA = "getPassportData";
+    private Passport passport;
 
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
@@ -186,24 +188,50 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             String resultReadPassport = "";
                             try {
                                 resultReadPassport = startReadingPassport();
-                                //while (DoReadingPassport) {
-                                //    TimeUnit.SECONDS.sleep(10);
-                                //}
-                            }
+                             }
                             catch (Throwable e) {
-                                resultReadPassport = "0^Throwable Exception";
+                                jsonObject.put("ErrorMessage", "PassportScannerPlugin -> readPassport Throwable Exception: " + e.getMessage());
+                                openCallbackContext.error(jsonObject.toString());
                             }
-                            //resultFindDevice = resultFindDevice + ", execute resultReadPassport = " + resultReadPassport;
-                            //openCallbackContext.success("readPassport(): " + resultFindDevice);
                             openCallbackContext.success(resultReadPassport);
 
                         } catch (Exception e) {
-                            openCallbackContext.error("Error. PassportScannerPlugin -> readPassport : " + e.getMessage());
+                            try {
+                                jsonObject.put("ErrorMessage", "PassportScannerPlugin -> readPassport : " + e.getMessage());
+                            } catch (JSONException e1) {
+                                e1.printStackTrace();
+                            }
+                            openCallbackContext.error(jsonObject.toString());
                         }
                     }
                 });
-                return true;
-            }
+                return true;  // else if (action.equals(ACTION_READ_PASSPORT)
+        } else if (action.equals(ACTION_GET_PASSPORT_DATA)) {
+            cordova.getThreadPool().execute(new Runnable() {
+                public void run() {
+                    try {
+                        String resultReadPassport = "";
+                        try {
+                            resultReadPassport = getPassportData();
+                        }
+                        catch (Throwable e) {
+                            jsonObject.put("ErrorMessage", "PassportScannerPlugin -> getPassportData() Throwable Exception: " + e.getMessage());
+                            openCallbackContext.error(jsonObject.toString());
+                        }
+                        openCallbackContext.success(resultReadPassport);
+
+                    } catch (Exception e) {
+                        try {
+                            jsonObject.put("ErrorMessage", "PassportScannerPlugin -> getPassportData() : " + e.getMessage());
+                        } catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                        openCallbackContext.error(jsonObject.toString());
+                    }
+                }
+            });
+            return true;
+        } // else if (action.equals(ACTION_READ_PASSPORT)
         } catch (Throwable e) {
             return false;
         }
@@ -250,7 +278,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
             //return resultFindDevice + e.getMessage();
         }
         return isDeviceFound;
-        //return resultFindDevice;
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -340,14 +367,14 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 logMessage.append("\r\n");
                             }
                             //Logger.getInstance().write(logMessage.toString());
-                            final Passport passport = new Passport(mrz);
+                            //final Passport passport = new Passport(mrz);
+                            passport = new Passport(mrz);
                             if (!passport.isPassport()) {
                                 //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
                                 jsonObject.put("ErrorMessage", "startReadingPassport | Document type is not passport ");
                                 return jsonObject.toString();
                             } else {
-
-                                //FormattingHelper fh = new FormattingHelper();
+                                /*
                                 try {
                                     jsonObject.put("FirstName", passport.getFirstName());
                                     jsonObject.put("LastName", passport.getLastName());
@@ -357,24 +384,15 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                     jsonObject.put("DateOfBirth", passportDateConvert(passport.getBirthDateString(), true));
                                     jsonObject.put("Nationality", passport.getNationality());
                                     jsonObject.put("Sex", passport.getGender());
-                                    //jsonObject.put("mrzText", passport.toString());
-                                    //jsonObject.put("documentCode", passport.getDocumentType());
+                                    jsonObject.put("ErrorMessage", "");
 
                                 } catch (JSONException e) {
                                     Log.e("jsonObject.put", e.toString());
                                     jsonObject.put("ErrorMessage", "Error. jsonObject.toString() = " + e.toString());
                                     return  jsonObject.toString();
                                 }
-
-                                //showMessage("ttPassportRecognized", "Passport recognized, saving data" + "...");  FormattingHelper.dateToOsDateString(passport.getBirthDate())
-                                //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
-                                //        + "^" + fh.dateToOsDateString(passport.getValidityDate()) + "^" + fh.dateToOsDateString(passport.getBirthDate()) + "^" + passport.getNationality() + "^"
-                                //        + passport.getGender() + "^";
-
-                                //return  "1^" + passport.getFirstName() + "^" + passport.getLastName() + "^" + passport.getDocumentNumber() + "^" + passport.getIssuingState()
-                                //        + "^" + passport.getValidityDateString() + "^" + passport.getBirthDateString() + "^" + passport.getNationality() + "^" + passport.getGender() + "^";
-
                                 return jsonObject.toString();
+                                */
                             }
                         } catch (PassportCrcException e) {
                             try {
@@ -421,6 +439,42 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
 
         return res;
+    }
+
+    private String getPassportData() {
+
+        if (passport != null && passport.getFirstName().trim() != "" && passport.getLastName().trim() != "" && passport.getDocumentNumber().trim() != "") {
+            try {
+                jsonObject.put("FirstName", passport.getFirstName());
+                jsonObject.put("LastName", passport.getLastName());
+                jsonObject.put("DocumentNumber", passport.getDocumentNumber());
+                jsonObject.put("Issuer", passport.getIssuingState());
+                jsonObject.put("DateOfExpiry", passportDateConvert(passport.getValidityDateString(), false)); // fh.dateToOsDateString(passport.getValidityDate()));
+                jsonObject.put("DateOfBirth", passportDateConvert(passport.getBirthDateString(), true));
+                jsonObject.put("Nationality", passport.getNationality());
+                jsonObject.put("Sex", passport.getGender());
+                jsonObject.put("ErrorMessage", "");
+                //jsonObject.put("mrzText", passport.toString());
+                //jsonObject.put("documentCode", passport.getDocumentType());
+
+            } catch (JSONException e) {
+                Log.e("jsonObject.put", e.toString());
+                try {
+                    jsonObject.put("ErrorMessage", "Error. jsonObject.toString() = " + e.toString());
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                return jsonObject.toString();
+            }
+        }
+        else
+            try {
+                jsonObject.put("ErrorMessage", "Passport  data is missing");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        return jsonObject.toString();
     }
 
     private String passportDateConvert(String stringDateShort, Boolean isDateOfBirth) {
