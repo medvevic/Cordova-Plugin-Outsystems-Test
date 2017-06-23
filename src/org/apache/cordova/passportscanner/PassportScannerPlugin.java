@@ -393,6 +393,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 }
                                 return jsonObject.toString();
                                 */
+                                return getPassportData();
                             }
                         } catch (PassportCrcException e) {
                             try {
