@@ -38,9 +38,9 @@ PassportScannerPlugin.prototype = {
     cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "readPassport");
   },
 
-//  getPassportData: function (successCallback, errorCallback) {
-//    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "getPassportData");
-//  },
+  getPassportData: function (successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "getPassportData");
+  },
 };
 
 PassportScannerPlugin.install = function () {
