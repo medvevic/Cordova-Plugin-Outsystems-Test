@@ -983,7 +983,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     if (stopFlag != null && stopFlag.isSet()) {
                         break;
                     }
-                    wait(100);
+                    wait(500);
 
                     //bq.poll(timeout, TimeUnit.MILLISECONDS);
 
