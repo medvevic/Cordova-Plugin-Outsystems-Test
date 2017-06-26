@@ -323,25 +323,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
         return mrz != null && mrz.length > 0 ? true : false;
     }
 
-
-/*  // [Victor] Impossible to compile
-    @Override
-    protected void onProgressUpdate(Integer... values)
-    {
-        super.onProgressUpdate(values);
-
-        // Update ProgressBar value
-        if ((values[0] >= 0) && (values[0] <= 100))
-        {
-
-            if (values[0] == ReadingStep.SEL)
-            {
-                updateActivity(scanner.getPassportView());
-            }
-        }
-    }
-*/
-
     //--------------------------------------------------------------------------------------------------
 
     private String startReadingPassport() throws ExecutionException, InterruptedException {
@@ -432,9 +413,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             //final Passport passport = new Passport(mrz);
                             passport = new Passport(mrz);
                             if (!passport.isPassport()) {
-                                //showMessage("ttErrorPassportReaderDocumentType", "Document type is not passport");
-                                jsonObject.put("ErrorMessage", "startReadingPassport | Document type is not passport ");
-                                return jsonObject.toString();
+                                sendErrorData("Document type is not passport ");
+                                return sendErrorData("Document type is not passport ");
                             } else {
                                 /*
                                 try {
@@ -535,6 +515,40 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 jsonObject.put("ErrorMessage", "Passport  data is missing");
             } catch (JSONException e) {
                 e.printStackTrace();
+            }
+
+        return jsonObject.toString();
+    }
+
+    private String sendErrorData(String errorMessage) {
+
+            try {
+                jsonObject.put("FirstName", "");
+                jsonObject.put("LastName", "");
+                jsonObject.put("DocumentNumber", "");
+                jsonObject.put("Issuer", "");
+                jsonObject.put("DateOfExpiry", "1901-01-01");
+                jsonObject.put("DateOfBirth", "1901-01-01");
+                jsonObject.put("Nationality", "");
+                jsonObject.put("Sex", "");
+                jsonObject.put("ErrorMessage", errorMessage);
+
+            } catch (JSONException e) {
+                Log.e("jsonObject.put", e.toString());
+                try {
+                    jsonObject.put("FirstName", "");
+                    jsonObject.put("LastName", "");
+                    jsonObject.put("DocumentNumber", "");
+                    jsonObject.put("Issuer", "");
+                    jsonObject.put("DateOfExpiry", "1901-01-01");
+                    jsonObject.put("DateOfBirth", "1901-01-01");
+                    jsonObject.put("Nationality", "");
+                    jsonObject.put("Sex", "");
+                    jsonObject.put("ErrorMessage", "Error. jsonObject.toString() = " + e.toString());
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
+                return jsonObject.toString();
             }
 
         return jsonObject.toString();
@@ -911,6 +925,21 @@ public class PassportScannerPlugin extends CordovaPlugin {
             send((byte) 'C', new byte[]{0x00}, stopFlag);
 
             send((byte) 'C', new byte[]{0x01}, stopFlag);
+
+            return mMRZ;
+        }
+
+        public synchronized String[] IsPassportInSlot() throws IOException
+        {
+            mMRZ=null;
+
+            // Get MRZ
+
+            // Force reset of document detection, to detect document already in the slot
+            send((byte) 'C', new byte[]{0x00}, null);
+            //send(new byte{0x50}, new byte[]{0x00}, null);
+
+            //send((byte) 'C', new byte[]{0x01}, null);
 
             return mMRZ;
         }
@@ -2526,31 +2555,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
             return true;
         }
 
-    }
-
-    protected void showMessage(final String messageLabel, final String messageDefault, final Throwable e) {
-        //Logger.getInstance().write(messageDefault);
-        //Logger.getInstance().write(e);
-        //translate(messageLabel, messageDefault, new SuccessHandler<String>() {
-        //    @Override
-        //    public void onSuccess(String data) {
-        //        showMessage(data, e, false);
-        //    }
-        //});
-    }
-
-    protected void showMessage(final String messageLabel, final String messageDefault) {
-        //Logger.getInstance().write(messageDefault);
-        //translate(messageLabel, messageDefault, new SuccessHandler<String>() {
-        //    @Override
-        //    public void onSuccess(String data) {
-        //        showMessage(data, false);
-        //    }
-        //});
-    }
-
-    protected void showMessage(Throwable e) {
-        //showMessage(null, e, true);
     }
 
     public abstract class Logger {
