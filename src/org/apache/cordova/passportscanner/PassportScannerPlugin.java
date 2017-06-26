@@ -398,7 +398,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 return getPassportData();
                             }
                         } catch (PassportCrcException e) {
-                            //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
                             errorDescription = "Document data verification failed. This can be a problem of scanning, or the document is corrupted";
                             return sendErrorData(errorDescription);
                         } catch (Exception e) {
