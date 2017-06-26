@@ -159,6 +159,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private static final String ACTION_GET_PASSPORT_DATA = "getPassportData";
     //private static final String ACTION_IS_PASSPORT_IN_SLOT = "isPassportInSlot";
     private Passport passport;
+    String errorDescription = "Document type is not passport";
 
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext)
@@ -328,7 +329,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private String startReadingPassport() throws ExecutionException, InterruptedException {
 
         if (passportScanner == null || !passportScanner.hasConnection()) {
-            return sendErrorData("passportScanner is null");
+            errorDescription = "passportScanner is null";
+            return sendErrorData(errorDescription);
         }
         stopReadingPassportFlag = new NotificationFlag();
         jsonObject = new JSONObject();
@@ -347,7 +349,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     try {
                         passportScanner.resume();  // very important method !!!!!!
                     } catch (IOException e) {
-                        return sendErrorData("IOException : passportScanner.resume");
+                        errorDescription = "IOException : passportScanner.resume";
+                        return sendErrorData(errorDescription);
                     }
                 }
 
@@ -363,18 +366,20 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                 passportScanner.resume();
                             } catch (Throwable e1) {
                                 //Logger.getInstance().write(e1);
-                                return sendErrorData("Throwable: " + e1.getMessage());
+                                errorDescription = "Throwable: " + e1.getMessage();
+                                return sendErrorData(errorDescription);
                             }
                             // Avoid going into loop hitting on the same IO error over and over again
-                            //if (wasIoError) {
-                            //    return sendErrorData("wasIoError: Avoid going into loop hitting on the same IO error over and over again");
-                            //} else {
-                            //    wasIoError = true;
-                            //}
+                            if (wasIoError) {
+                                return sendErrorData(errorDescription); // Last error description
+                            } else {
+                                wasIoError = true;
+                            }
                         }
                     }
                     if (stopReadingPassportFlag.isSet()) {
-                        return sendErrorData("stopReadingPassportFlag.isSet");
+                        errorDescription = "stopReadingPassportFlag.isSet";
+                        return sendErrorData(errorDescription);
                     }
                     if (mrz != null && mrz.length > 0) {
                         try {
@@ -388,15 +393,18 @@ public class PassportScannerPlugin extends CordovaPlugin {
                             //final Passport passport = new Passport(mrz);
                             passport = new Passport(mrz);
                             if (!passport.isPassport()) {
-                                return sendErrorData("Document type is not passport ");
+                                errorDescription = "Document type is not passport";
+                                return sendErrorData(errorDescription);
                             } else {
                                 return getPassportData();
                             }
                         } catch (PassportCrcException e) {
                             //showMessage("ttErrorPassportCrc", "Document data verification failed. This can be a problem of scanning, or the document is corrupted.");
-                            return sendErrorData("Document data verification failed. This can be a problem of scanning, or the document is corrupted");
+                            errorDescription = "Document data verification failed. This can be a problem of scanning, or the document is corrupted";
+                            return sendErrorData(errorDescription);
                         } catch (Exception e) {
-                            return sendErrorData("Exception " + e.getMessage());
+                            errorDescription = "Exception " + e.getMessage();
+                            return sendErrorData(errorDescription);
                         }
                     }
                     i= i+1;
@@ -406,13 +414,15 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         //passportScanner.getPort().open();
                         //return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr + ", usb_GetVersion = " + usb_GetVersion;
 
-                        return sendErrorData("More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
-                        ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr);
+                        errorDescription = "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
+                                ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr;
+                        return sendErrorData(errorDescription);
                     }
 
                 }
 
-                return sendErrorData("!stopReadingPassportFlag.isSet");
+                errorDescription = "!stopReadingPassportFlag.isSet";
+                return sendErrorData(errorDescription);
             }
         }.execute().get();
 
