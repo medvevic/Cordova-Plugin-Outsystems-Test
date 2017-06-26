@@ -157,6 +157,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private static final String ACTION_FIND_DEVICES = "isDeviceFound";
     private static final String ACTION_READ_PASSPORT = "readPassport";
     private static final String ACTION_GET_PASSPORT_DATA = "getPassportData";
+    private static final String ACTION_IS_PASSPORT_IN_SLOT = "isPassportInSlot";
     private Passport passport;
 
     @Override
@@ -168,7 +169,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
         try {
             if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
                 openCallbackContext.success(1);
-                return true;
+                return true;  // else if (action.equals(ACTION_AVAILABLE)
+
             } else if (action.equals(ACTION_FIND_DEVICES)) {   //    "isDeviceFound".equals(action)
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -180,7 +182,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         }
                     }
                 });
-                return true;
+                return true;  // else if (action.equals(ACTION_FIND_DEVICES)
+
             } else if (action.equals(ACTION_READ_PASSPORT)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -206,6 +209,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                 });
                 return true;  // else if (action.equals(ACTION_READ_PASSPORT)
+
         } else if (action.equals(ACTION_GET_PASSPORT_DATA)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
@@ -230,8 +234,34 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                 }
             });
-            return true;
-        } // else if (action.equals(ACTION_READ_PASSPORT)
+            return true;  // else if (action.equals(ACTION_GET_PASSPORT_DATA)
+
+            } else if (action.equals(ACTION_IS_PASSPORT_IN_SLOT)) {
+                cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        try {
+                            try {
+                                openCallbackContext.success(IsPassportInSlot() == true ? 1 :0);
+                            }
+                            catch (Throwable e) {
+                                jsonObject.put("ErrorMessage", "PassportScannerPlugin -> readPassport Throwable Exception: " + e.getMessage());
+                                openCallbackContext.error(jsonObject.toString());
+                            }
+
+                        } catch (Exception e) {
+                            try {
+                                jsonObject.put("ErrorMessage", "PassportScannerPlugin -> readPassport : " + e.getMessage());
+                            } catch (JSONException e1) {
+                                e1.printStackTrace();
+                            }
+                            openCallbackContext.error(jsonObject.toString());
+                        }
+                    }
+                });
+                return true;  // else if (action.equals(ACTION_IS_PASSPORT_IN_SLOT)
+
+        } // if (action.equals(ACTION_AVAILABLE
+            // )
         } catch (Throwable e) {
             return false;
         }
@@ -279,6 +309,38 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
         return isDeviceFound;
     }
+
+    //--------------------------------------------------------------------------------------------------
+    private Boolean IsPassportInSlot() {
+
+        String[] mrz = null;
+        try {
+            mrz = passportScanner.waitMRZ(null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return mrz != null && mrz.length > 0 ? true : false;
+    }
+
+
+/*  // [Victor] Impossible to compile
+    @Override
+    protected void onProgressUpdate(Integer... values)
+    {
+        super.onProgressUpdate(values);
+
+        // Update ProgressBar value
+        if ((values[0] >= 0) && (values[0] <= 100))
+        {
+
+            if (values[0] == ReadingStep.SEL)
+            {
+                updateActivity(scanner.getPassportView());
+            }
+        }
+    }
+*/
 
     //--------------------------------------------------------------------------------------------------
 
