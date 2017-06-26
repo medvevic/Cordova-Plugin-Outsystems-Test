@@ -157,7 +157,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private static final String ACTION_FIND_DEVICES = "isDeviceFound";
     private static final String ACTION_READ_PASSPORT = "readPassport";
     private static final String ACTION_GET_PASSPORT_DATA = "getPassportData";
-    private static final String ACTION_IS_PASSPORT_IN_SLOT = "isPassportInSlot";
+    //private static final String ACTION_IS_PASSPORT_IN_SLOT = "isPassportInSlot";
     private Passport passport;
 
     @Override
@@ -235,7 +235,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 }
             });
             return true;  // else if (action.equals(ACTION_GET_PASSPORT_DATA)
-
+/*
             } else if (action.equals(ACTION_IS_PASSPORT_IN_SLOT)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -259,9 +259,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                 });
                 return true;  // else if (action.equals(ACTION_IS_PASSPORT_IN_SLOT)
+*/            // )
 
         } // if (action.equals(ACTION_AVAILABLE
-            // )
         } catch (Throwable e) {
             return false;
         }
