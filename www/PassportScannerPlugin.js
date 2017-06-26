@@ -43,11 +43,11 @@ PassportScannerPlugin.prototype = {
 //  },
 
 
-  isPassportInSlot: function (callback) {
-    cordova.exec(function (devFound) {
-      callback(devFound ? true : false);
-    }, function() { callback(false); }, "PassportScannerPlugin", "isPassportInSlot", []);
-  },
+//  isPassportInSlot: function (callback) {
+//    cordova.exec(function (devFound) {
+//      callback(devFound ? true : false);
+//    }, function() { callback(false); }, "PassportScannerPlugin", "isPassportInSlot", []);
+//  },
 
 };
 
