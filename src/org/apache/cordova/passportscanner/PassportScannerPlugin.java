@@ -217,7 +217,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     try {
                         String resultReadPassport = "";
                         try {
-                            resultReadPassport = getPassportData();
+                            JSONObject jObject  = new JSONObject(getPassportData()); // json
+                            String errMsg = jObject.getString("ErrorMessage").trim(); // get value from JSONObject.
+
+                            resultReadPassport = errMsg.length() == 0 ? getPassportData() : sendErrorData(errorDescription);
                         }
                         catch (Throwable e) {
                             jsonObject.put("ErrorMessage", "PassportScannerPlugin -> getPassportData() Throwable Exception: " + e.getMessage());
@@ -340,10 +343,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 String[] mrz = null;
                 boolean wasIoError = false;
 
-                String usb_mScannerVersion = passportScanner.mScannerVersion;
-                String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
-                String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen1 == true" :  "passportScanner.isOpen1 == FALSE";
-
                 if (!passportScanner.isOpen()) {
                     try {
                         passportScanner.resume();  // very important method !!!!!!
@@ -412,6 +411,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         //passportScanner.getPort().open();
                         //return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr + ", usb_GetVersion = " + usb_GetVersion;
 
+
+                        String usb_mScannerVersion = passportScanner.mScannerVersion;
+                        String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
+                        String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen1 == true" :  "passportScanner.isOpen1 == FALSE";
+
                         errorDescription = "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
                                 ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr;
                         return sendErrorData(errorDescription);
@@ -466,6 +470,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private String sendErrorData(String errorMessage) {
 
             try {
+                /*
                 jsonObject.put("FirstName", "");
                 jsonObject.put("LastName", "");
                 jsonObject.put("DocumentNumber", "");
@@ -474,11 +479,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 jsonObject.put("DateOfBirth", "1901-01-01");
                 jsonObject.put("Nationality", "");
                 jsonObject.put("Sex", "");
+                */
                 jsonObject.put("ErrorMessage", errorMessage);
 
             } catch (JSONException e) {
                 Log.e("jsonObject.put", e.toString());
                 try {
+                    /*
                     jsonObject.put("FirstName", "");
                     jsonObject.put("LastName", "");
                     jsonObject.put("DocumentNumber", "");
@@ -487,6 +494,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     jsonObject.put("DateOfBirth", "1901-01-01");
                     jsonObject.put("Nationality", "");
                     jsonObject.put("Sex", "");
+                    */
                     jsonObject.put("ErrorMessage", "Error. jsonObject.toString() = " + e.toString());
                 } catch (JSONException e1) {
                     e1.printStackTrace();
