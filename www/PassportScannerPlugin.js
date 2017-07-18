@@ -18,30 +18,41 @@ function onResume() {
 
 PassportScannerPlugin.prototype = {
 
-  available: function (callback) {
-    cordova.exec(function (avail) {
-      callback(avail ? true : false);
-    }, function() { callback(false); }, "PassportScannerPlugin", "available", []);
-  },
-
 //  isDeviceFound: function (successCallback, errorCallback) {
 //    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "isDeviceFound");
 //  },
 
-  isDeviceFound: function (callback) {
-    cordova.exec(function (devFound) {
-      callback(devFound ? true : false);
-    }, function() { callback(false); }, "PassportScannerPlugin", "isDeviceFound", []);
-  },
+    available: function (callback) {
+        cordova.exec(function (avail) {
+          callback(avail ? true : false);
+        }, function() { callback(false); }, "PassportScannerPlugin", "available", []);
+    },
 
-  readPassport: function (successCallback, errorCallback) {
-    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "readPassport");
-  },
+    isDeviceFound: function (callback) {
+        cordova.exec(function (devFound) {
+            callback(devFound ? true : false);
+        }, function() { callback(false); }, "PassportScannerPlugin", "isDeviceFound", []);
+    },
 
-  getPassportData: function (successCallback, errorCallback) {
-    cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "getPassportData");
-  },
+    keepAwake: function (successCallback, errorCallback) {
+        cordova.exec(function (keepUnSleep) {
+          callback(keepUnSleep ? true : false);
+        }, function() { callback(false); }, "PassportScannerPlugin", "keepAwake", []);
 
+        //cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "keepAwake");
+    },
+
+    allowSleepAgain: function (successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "allowSleepAgain");
+    },
+
+    readPassport: function (successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "readPassport");
+    },
+
+    getPassportData: function (successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "getPassportData");
+    },
 
 //  isPassportInSlot: function (callback) {
 //    cordova.exec(function (devFound) {
