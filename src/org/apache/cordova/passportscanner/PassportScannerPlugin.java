@@ -135,6 +135,36 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 });
                 return true; // ACTION_FIND_DEVICES
 //--------------------------------------------------------------------------------------------------
+            } else if (ACTION_KEEP_AWAKE.equals(action)) {
+                cordova.getThreadPool().execute(new Runnable() {
+                            public void run() {
+                                cordova.getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                //callbackContext.success(1);
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                            }
+                        });
+                return true; // ACTION_KEEP_AWAKE
+/*
+                cordova.getActivity().runOnUiThread(new Runnable() {
+                            public void run() {
+                                cordova.getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                //callbackContext.success(1);
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                            }
+                        });
+                return true; // ACTION_KEEP_AWAKE
+*/
+//--------------------------------------------------------------------------------------------------
+            } else if (ACTION_ALLOW_SLEEP_AGAIN.equals(action)) {
+                cordova.getActivity().runOnUiThread(
+                        new Runnable() {
+                            public void run() {
+                                cordova.getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                            }
+                        });
+                return true; // ACTION_ALLOW_SLEEP_AGAIN
+//--------------------------------------------------------------------------------------------------
             } else if (ACTION_READ_PASSPORT.equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -189,28 +219,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 }
             });
             return true;  // ACTION_GET_PASSPORT_DATA
-//--------------------------------------------------------------------------------------------------
-            } else if (ACTION_KEEP_AWAKE.equals(action)) {
-                cordova.getActivity().runOnUiThread(
-                        new Runnable() {
-                            public void run() {
-                                cordova.getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                                //callbackContext.success(1);
-                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
-                            }
-                        });
-
-                return true; // ACTION_KEEP_AWAKE
-//--------------------------------------------------------------------------------------------------
-            } else if (ACTION_ALLOW_SLEEP_AGAIN.equals(action)) {
-                cordova.getActivity().runOnUiThread(
-                        new Runnable() {
-                            public void run() {
-                                cordova.getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
-                            }
-                        });
-                return true; // ACTION_ALLOW_SLEEP_AGAIN
 //--------------------------------------------------------------------------------------------------
             } else if (ACTION_IS_PASSPORT_IN_SLOT.equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
