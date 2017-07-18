@@ -1,6 +1,5 @@
-package org.apache.cordova.passportscanner;
+package com.etaxfree.passportscanner;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
@@ -9,7 +8,6 @@ import android.content.Context;
 
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.hardware.input.InputManager;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
@@ -18,19 +16,16 @@ import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbRequest;
-import android.icu.text.SimpleDateFormat;
 import android.net.ParseException;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 import android.view.InputDevice;
-import android.view.View;
-import android.widget.ImageView;
+import android.view.WindowManager;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,64 +52,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class PassportScannerPlugin extends CordovaPlugin {
 
-    // The current driver that handle the serial port
-    //private UsbSerialDriver driver;
-    // The serial port that will be used in this plugin
-    //private UsbSerialPort port;
-    // Read buffer, and read params
-    private static final int READ_WAIT_MILLIS = 200;
-    private static final int BUFSIZ = 4096;
-    private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFSIZ);
-    // Connection info
-    private int baudRate;
-    private int dataBits;
-    private int stopBits;
-    private int parity;
-    private boolean setDTR;
-    private boolean setRTS;
-    private boolean sleepOnPause;
-
-    // callback that will be used to send back data to the cordova app
-    private CallbackContext readCallback;
-
-    // I/O manager to handle new incoming serial data
-    private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-    private UsbDevice device;
-    private UsbDeviceConnection connection;
-
-    //----------------------------------------------------------
-    private final ExecutorService threadPool = Executors.newCachedThreadPool();
-    private CordovaWebView cordovaWebView;
-    private CordovaPlugin activityResultCallback = null;
-    private ImageView imageView;
-    private View errorView;
+    private static final int BUFSIZE = 4096;
     private PassportScanner passportScanner;
-    private String resultFindDevice;
     private Boolean isDeviceFound = false;
-    private Boolean DoReadingPassport = true;
-
-    //private TscPrinter tscPrinter;
-
-    //------------------------------- New for work from Outsystems
-
-    // Index of the 'params' object in CordovaArgs array passed in each action.
-    private static final int ARG_INDEX_PARAMS = 0;
-    // Index of the 'data' ArrayBuffer in CordovaArgs array passed in each action (where relevant).
-    private static final int ARG_INDEX_DATA_ARRAYBUFFER = 1;
-
-    // An endpoint address is constructed from the interface index left-shifted this many bits,
-    // or-ed with the endpoint index.
-    private static final int ENDPOINT_IF_SHIFT = 16;
-
-    private UsbManager mUsbManager;
-    private PendingIntent mPermissionIntent;
     private BroadcastReceiver mUsbReceiver;
     private NotificationFlag stopReadingPassportFlag;
-    JSONObject jsonObject;
+    private JSONObject jsonObject;
 
     @Override
     public void onReset() {
@@ -158,6 +104,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private static final String ACTION_READ_PASSPORT = "readPassport";
     private static final String ACTION_GET_PASSPORT_DATA = "getPassportData";
     private static final String ACTION_IS_PASSPORT_IN_SLOT = "isPassportInSlot";
+
+    private static final String ACTION_KEEP_AWAKE = "keepAwake";
+    private static final String ACTION_ALLOW_SLEEP_AGAIN = "allowSleepAgain";
+
     private Passport passport;
     String errorKey = "NotPassport";
     String errorDescription = "Document type is not passport";
@@ -167,26 +117,25 @@ public class PassportScannerPlugin extends CordovaPlugin {
             throws JSONException {
         Log.d(TAG, "Action: " + action);
         this.openCallbackContext = callbackContext;
-
+//--------------------------------------------------------------------------------------------------
         try {
-            if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
+            if (ACTION_AVAILABLE.equals(action)) {
                 openCallbackContext.success(1);
-                return true;  // else if (action.equals(ACTION_AVAILABLE)
-
-            } else if (action.equals(ACTION_FIND_DEVICES)) {   //    "isDeviceFound".equals(action)
+                return true; // ACTION_AVAILABLE
+//--------------------------------------------------------------------------------------------------
+            } else if (ACTION_FIND_DEVICES.equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
-                            openCallbackContext.success(findDevices() == true ? 1 :0);  // "findDevices(): " + findDevices()
-                            //openCallbackContext.success("findDevices(): " + findDevices());  // "findDevices(): " + findDevices()
+                            openCallbackContext.success(findDevices() ? 1 :0);
                         } catch (Exception e) {
                             openCallbackContext.error("Error. PassportScannerPlugin -> findDevices : " + e.getMessage()); //
                         }
                     }
                 });
-                return true;  // else if (action.equals(ACTION_FIND_DEVICES)
-
-            } else if (action.equals(ACTION_READ_PASSPORT)) {
+                return true; // ACTION_FIND_DEVICES
+//--------------------------------------------------------------------------------------------------
+            } else if (ACTION_READ_PASSPORT.equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
@@ -210,9 +159,9 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         }
                     }
                 });
-                return true;  // else if (action.equals(ACTION_READ_PASSPORT)
-
-        } else if (action.equals(ACTION_GET_PASSPORT_DATA)) {
+                return true; // ACTION_READ_PASSPORT
+//--------------------------------------------------------------------------------------------------
+        } else if (ACTION_GET_PASSPORT_DATA.equals(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
                     try {
@@ -239,14 +188,36 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                 }
             });
-            return true;  // else if (action.equals(ACTION_GET_PASSPORT_DATA)
+            return true;  // ACTION_GET_PASSPORT_DATA
+//--------------------------------------------------------------------------------------------------
+            } else if (ACTION_KEEP_AWAKE.equals(action)) {
+                cordova.getActivity().runOnUiThread(
+                        new Runnable() {
+                            public void run() {
+                                cordova.getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                callbackContext.success(1);
+                                //callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                            }
+                        });
 
-            } else if (action.equals(ACTION_IS_PASSPORT_IN_SLOT)) {
+                return true; // ACTION_KEEP_AWAKE
+//--------------------------------------------------------------------------------------------------
+            } else if (ACTION_ALLOW_SLEEP_AGAIN.equals(action)) {
+                cordova.getActivity().runOnUiThread(
+                        new Runnable() {
+                            public void run() {
+                                cordova.getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                            }
+                        });
+                return true; // ACTION_ALLOW_SLEEP_AGAIN
+//--------------------------------------------------------------------------------------------------
+            } else if (ACTION_IS_PASSPORT_IN_SLOT.equals(action)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
                             try {
-                                openCallbackContext.success(IsPassportInSlot() == true ? 1 :0);
+                                openCallbackContext.success(isPassportInSlot() ? 1 :0);
                             }
                             catch (Throwable e) {
                                 jsonObject.put("ErrorMessage", "PassportScannerPlugin -> readPassport Throwable Exception: " + e.getMessage());
@@ -263,59 +234,36 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         }
                     }
                 });
-                return true;  // else if (action.equals(ACTION_IS_PASSPORT_IN_SLOT)
-
-        } // if (action.equals(ACTION_AVAILABLE
+                return true;  // ACTION_IS_PASSPORT_IN_SLOT
+//--------------------------------------------------------------------------------------------------
+            }
         } catch (Throwable e) {
             return false;
         }
         return false;
     }
 
-    private Boolean findDevices() {
+    private boolean findDevices() {
         try {
             DeviceWrapper dw = new DeviceWrapper();
-            DeviceWrapper barcodeReaderDevice = dw.forBarcodeReader();
             new DeviceFinder(new DeviceFinder.EventListener() {
                 @Override
                 public void onDeviceFound(DeviceWrapper device) {
-                    String name = device.getName();
-                    if (DeviceWrapper.BARCODE_READER.equals(device.getName())) {
-                    }
-                    else if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
-                        //resultFindDevice = resultFindDevice + ", onDeviceFound device.getName() = " + device.getName();
-
+                    if (DeviceWrapper.PASSPORT_SCANNER.equals(device.getName())) {
                         passportScanner = new PassportScanner(device.getUsbDevice(), device.getUsbConnection());
-
-                        //resultFindDevice = resultFindDevice + ", onDeviceFound passportScanner.hasConnection() = " + passportScanner.hasConnection();
-
                         isDeviceFound = true;
-
-                    } else if (DeviceWrapper.RECEIPT_PRINTER.equals(device.getName())) {
-                        // TODO: there must be separate printer for sticker
-                        //escPosPrinter = new EscPosPrinter(device.getUsbDevice(), device.getUsbConnection(), 58);
-                    } else if (device.getName().equals(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_REGO_NAME)) {
-                        //contextRegoPrinter = new RegoPrinter(getApplicationContext());
-                        //contextRegoPrinter.setPort(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_REGO_ADDRESS);
-                    } else if (device.getName().equals(DeviceWrapper.RECEIPT_PRINTER_BLUETOOTH_TSC_NAME)) {
-                        //tscPrinter = new TscPrinter();
-                        //tscPrinter.setMacAddress(device.getBluetoothAddress());
                     }
                 }
-            }).find(this.cordova.getActivity().getApplicationContext(), barcodeReaderDevice, dw.forPassportScannerNew(),
-                    dw.forPassportScanner(), dw.forReceiptPrinter(), dw.forBluetoothPrinterTSC());
-
-            // DeviceWrapper.forBluetoothPrinterREGO(), <- removed to make contextRegoPrinter == null and don't use Rego printer
+            }).find(this.cordova.getActivity().getApplicationContext(), dw.forPassportScannerNew(), dw.forPassportScanner());
         }
         catch (Throwable e) {
             return false;
-            //return resultFindDevice + e.getMessage();
         }
         return isDeviceFound;
     }
 
     //--------------------------------------------------------------------------------------------------
-    private Boolean IsPassportInSlot() {
+    private boolean isPassportInSlot() {
 
         String[] mrz = null;
         try {
@@ -324,7 +272,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             e.printStackTrace();
         }
 
-        return mrz != null && mrz.length > 0 ? true : false;
+        return mrz != null && mrz.length > 0;
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -339,7 +287,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         stopReadingPassportFlag = new NotificationFlag();
         jsonObject = new JSONObject();
 
-        String res = new AsyncTask<Void, Integer, String>() {
+        return new AsyncTask<Void, Integer, String>() {
             @Override
             protected String doInBackground(Void... voids) {
                 String[] mrz = null;
@@ -361,8 +309,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         mrz = passportScanner.waitMRZ(stopReadingPassportFlag);
                     } catch (Throwable e) {
                         if (!stopReadingPassportFlag.isSet()) {
-                            //showMessage("ttErrorPassportReaderIO", "Error communicating with passport reader", e);
-                            //return "Error communicating with passport reader";
                             try {
                                 passportScanner.resume();
                             } catch (Throwable e1) {
@@ -385,14 +331,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                     if (mrz != null && mrz.length > 0) {
                         try {
-                            StringBuilder logMessage = new StringBuilder();
-                            logMessage.append("Passport MRZ received:\r\n");
-                            for (String mrzi : mrz) {
-                                logMessage.append(mrzi);
-                                logMessage.append("\r\n");
-                            }
-                            //Logger.getInstance().write(logMessage.toString());
-                            //final Passport passport = new Passport(mrz);
                             passport = new Passport(mrz);
                             if (!passport.isPassport()) {
                                 errorKey = "NotPassport";
@@ -415,16 +353,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     i= i+1;
 
                     if (i>100) {
-                        String str_mrz = mrz == null ? "null" : mrz.toString();
-                        //passportScanner.getPort().open();
-                        //return "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr + ", usb_GetVersion = " + usb_GetVersion;
 
                         String usb_mScannerVersion = passportScanner.mScannerVersion;
                         String usb_getPortStr = passportScanner.getPort() == null? "getPort() = No scanner device available" :  passportScanner.getPort().toString();
-                        String usb_IsOpenStr = passportScanner.isOpen() == true? "passportScanner.isOpen1 == true" :  "passportScanner.isOpen1 == FALSE";
+                        String usb_IsOpenStr = passportScanner.isOpen() ? "passportScanner.isOpen1 == true" :  "passportScanner.isOpen1 == FALSE";
 
                         errorKey = "PassportScannerTooManyScanIteration";
-                        errorDescription = "More then 100 iteration in loop while, mrz = " + str_mrz + ", usb_IsOpen = " + usb_IsOpenStr +
+                        errorDescription = "More then 100 iteration in loop while, mrz = " + mrz + ", usb_IsOpen = " + usb_IsOpenStr +
                                 ", usb_mScannerVersion = " + usb_mScannerVersion + ", getPort() = "  + usb_getPortStr;
                         return sendErrorData(errorKey, errorDescription);
                     }
@@ -436,8 +371,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 return sendErrorData(errorKey, errorDescription);
             }
         }.execute().get();
-
-        return res;
     }
 
     private String getPassportData() {
@@ -496,7 +429,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         return jsonObject.toString();
     }
 
-    private String passportDateConvert(String stringDateShort, Boolean isDateOfBirth) {
+    private String passportDateConvert(String stringDateShort, boolean isDateOfBirth) {
 
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         int currentYearFirst2Digits = Integer.parseInt(String.valueOf(currentYear).substring(0,2));
@@ -505,7 +438,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         String shortDay = stringDateShort.substring(4);
         int shortYearInt = Integer.parseInt(shortYear);
         String fullYear = "";
-        if (isDateOfBirth == true) {
+        if (isDateOfBirth) {
             fullYear = shortYearInt >= currentYearFirst2Digits && shortYearInt <= 99 ? "19" + shortYear : "20" + shortYear;
         }
         else {
@@ -547,18 +480,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     public class DeviceWrapper {
 
-
-        public static final String BARCODE_READER = "BarcodeReader";
         public static final String PASSPORT_SCANNER = "PassportScanner";
-        public static final String RECEIPT_PRINTER = "ReceiptPrinter";
-        public static final String RECEIPT_PRINTER_BLUETOOTH_REGO_NAME = "RG-MLP58A";
-        public static final String RECEIPT_PRINTER_BLUETOOTH_REGO_ADDRESS = "00:02:5B:B3:D8:21";
-        //public static final String RECEIPT_PRINTER_BLUETOOTH_TSC_NAME = "Alpha-3R";
-        public static final String RECEIPT_PRINTER_BLUETOOTH_TSC_NAME = "BT-SPP";
-
-        public DeviceWrapper forBarcodeReader() {
-            return new DeviceWrapper(BARCODE_READER, 0x05E0, 0x1200); // 1504, 4608
-        }
 
         public DeviceWrapper forPassportScanner() {
             return new DeviceWrapper(PASSPORT_SCANNER, 0xFFFF, 5);
@@ -566,18 +488,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
         public DeviceWrapper forPassportScannerNew() {
             return new DeviceWrapper(PASSPORT_SCANNER, 0x2B78, 5);
-        }
-
-        public DeviceWrapper forReceiptPrinter() {
-            return new DeviceWrapper(RECEIPT_PRINTER, 1003, 8204);
-        }
-
-        public DeviceWrapper forBluetoothPrinterREGO() {
-            return new DeviceWrapper(RECEIPT_PRINTER_BLUETOOTH_REGO_NAME);
-        }
-
-        public DeviceWrapper forBluetoothPrinterTSC() {
-            return new DeviceWrapper(RECEIPT_PRINTER_BLUETOOTH_TSC_NAME);
         }
 
         public DeviceWrapper(String name, int vendorId, int productId) {
@@ -687,7 +597,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     public static class DeviceFinder {
 
-        String deviceName = "";
         public interface EventListener {
             void onDeviceFound(DeviceWrapper device);
         }
@@ -696,32 +605,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
             this.listener = listener;
         }
 
-        public String find(final Context context, DeviceWrapper... devices) {
+        public void find(final Context context, DeviceWrapper... devices) {
 
-            if (devices == null)
-                return "devices == null";
             this.devices = devices;
-/*
-        if (!EnvironmentHelper.getInstance().isMerchantDevice()) {
-            // Find bluetooth devices
-            try {
-                BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
-                // Phone does not support Bluetooth
-                if (btAdapter != null) {
-                    Set<BluetoothDevice> pairedDevices = btAdapter.getBondedDevices();
-                    if (pairedDevices.size() > 0) {
-                        for (BluetoothDevice device : pairedDevices) {
-                            DeviceWrapper dev = findDevice(device);
-                            if (dev != null) {
-                                listener.onDeviceFound(dev);
-                            }
-                        }
-                    }
-                }
-            } catch (Throwable e) {
-            }
-        }
-*/
+
             // Find USB devices
             try {
                 usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
@@ -731,12 +618,12 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     for (final UsbDevice device : usbManager.getDeviceList().values()) {
                         DeviceWrapper dev = findDevice(device);
                         if (dev != null) {
-                            deviceName = "USB";
                             usbManager.requestPermission(device, intent);
                         }
                     }
                 }
             } catch (Throwable e) {
+                //
             }
 
             // Find HID devices, which are among inputs
@@ -747,16 +634,14 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         if (id > 0) {
                             DeviceWrapper dev = findDevice(inputManager.getInputDevice(id));
                             if (dev != null) {
-                                deviceName = "HID";
                                 listener.onDeviceFound(dev);
                             }
                         }
                     }
                 }
             } catch (Throwable e) {
+                //
             }
-
-            return "device " + deviceName + " found!";
         }
 
         private static final String ACTION_USB_PERMISSION = "net.etaxfree.refund.helpers.USB_PERMISSION";
@@ -822,22 +707,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
             }
             return null;
         }
-/*
-    private DeviceWrapper findDevice(BluetoothDevice device) {
-        if (device == null || device.getName() == null) {
-            return null;
-        }
-
-        for(DeviceWrapper dev : this.devices) {
-            if (device.getName().equals(dev.getName())) {
-                dev.setBluetoothDevice(device);
-                dev.setBluetoothAddress(device.getAddress());
-                return dev;
-            }
-        }
-        return null;
-    }
-*/
     } // class DeviceFinder
 
     public class PassportScanner extends UsbSerialDevice {
@@ -1034,7 +903,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             }
         }
 
-        private synchronized int send(byte cmd_code, byte [] data, NotificationFlag stopFlag) throws IOException {
+        private synchronized int send(byte cmd_code, byte[] data, NotificationFlag stopFlag) throws IOException {
             if (getPort() == null)
                 throw new IOException("No scanner device available");
 
@@ -1061,7 +930,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             int written = getPort().write(cmd, 3000);
 
             // If continuous reading mode is enable expected response is Inquire
-            if (cmd_code == 'C' && data.length > 0 && data[0] == 1)
+            if (cmd_code == 'C' && data != null && data.length > 0 && data[0] == 1)
                 cmd_code = 'I';
 
             boolean gotResponse = false;
@@ -1152,67 +1021,67 @@ public class PassportScannerPlugin extends CordovaPlugin {
     public interface UsbSerialPort {
 
         /** 5 data bits. */
-        public static final int DATABITS_5 = 5;
+        int DATABITS_5 = 5;
 
         /** 6 data bits. */
-        public static final int DATABITS_6 = 6;
+        int DATABITS_6 = 6;
 
         /** 7 data bits. */
-        public static final int DATABITS_7 = 7;
+        int DATABITS_7 = 7;
 
         /** 8 data bits. */
-        public static final int DATABITS_8 = 8;
+        int DATABITS_8 = 8;
 
         /** No flow control. */
-        public static final int FLOWCONTROL_NONE = 0;
+        int FLOWCONTROL_NONE = 0;
 
         /** RTS/CTS input flow control. */
-        public static final int FLOWCONTROL_RTSCTS_IN = 1;
+        int FLOWCONTROL_RTSCTS_IN = 1;
 
         /** RTS/CTS output flow control. */
-        public static final int FLOWCONTROL_RTSCTS_OUT = 2;
+        int FLOWCONTROL_RTSCTS_OUT = 2;
 
         /** XON/XOFF input flow control. */
-        public static final int FLOWCONTROL_XONXOFF_IN = 4;
+        int FLOWCONTROL_XONXOFF_IN = 4;
 
         /** XON/XOFF output flow control. */
-        public static final int FLOWCONTROL_XONXOFF_OUT = 8;
+        int FLOWCONTROL_XONXOFF_OUT = 8;
 
         /** No parity. */
-        public static final int PARITY_NONE = 0;
+        int PARITY_NONE = 0;
 
         /** Odd parity. */
-        public static final int PARITY_ODD = 1;
+        int PARITY_ODD = 1;
 
         /** Even parity. */
-        public static final int PARITY_EVEN = 2;
+        int PARITY_EVEN = 2;
 
         /** Mark parity. */
-        public static final int PARITY_MARK = 3;
+        int PARITY_MARK = 3;
 
         /** Space parity. */
-        public static final int PARITY_SPACE = 4;
+        int PARITY_SPACE = 4;
 
         /** 1 stop bit. */
-        public static final int STOPBITS_1 = 1;
+        int STOPBITS_1 = 1;
 
         /** 1.5 stop bits. */
-        public static final int STOPBITS_1_5 = 3;
+        int STOPBITS_1_5 = 3;
 
         /** 2 stop bits. */
-        public static final int STOPBITS_2 = 2;
+        int STOPBITS_2 = 2;
 
-        public UsbSerialDriver getDriver();
+        UsbSerialDriver getDriver();
 
         /**
          * Port number within driver.
          */
-        public int getPortNumber();
+        int getPortNumber();
 
         /**
          * The serial number of the underlying UsbDeviceConnection, or {@code null}.
          */
-        public String getSerial();
+        String getSerial();
 
         /**
          * Opens and initializes the port. Upon success, caller must ensure that
@@ -1222,14 +1091,14 @@ public class PassportScannerPlugin extends CordovaPlugin {
          *            {@link UsbManager#openDevice(android.hardware.usb.UsbDevice)}
          * @throws IOException on error opening or initializing the port.
          */
-        public void open(UsbDeviceConnection connection) throws IOException;
+        void open(UsbDeviceConnection connection) throws IOException;
 
         /**
          * Closes the port.
          *
          * @throws IOException on error closing the port.
          */
-        public void close() throws IOException;
+        void close() throws IOException;
 
         /**
          * Reads as many bytes as possible into the destination buffer.
@@ -1239,7 +1108,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @return the actual number of bytes read
          * @throws IOException if an error occurred during reading
          */
-        public int read(final byte[] dest, final int timeoutMillis) throws IOException;
+        int read(final byte[] dest, final int timeoutMillis) throws IOException;
 
         /**
          * Writes as many bytes as possible from the source buffer.
@@ -1249,7 +1118,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @return the actual number of bytes written
          * @throws IOException if an error occurred during writing
          */
-        public int write(final byte[] src, final int timeoutMillis) throws IOException;
+        int write(final byte[] src, final int timeoutMillis) throws IOException;
 
         /**
          * Sets various serial port parameters.
@@ -1264,7 +1133,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          *            {@link #PARITY_SPACE}.
          * @throws IOException on error setting the port parameters
          */
-        public void setParameters(
+        void setParameters(
                 int baudRate, int dataBits, int stopBits, int parity) throws IOException;
 
         /**
@@ -1273,7 +1142,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @return the current state, or {@code false} if not supported.
          * @throws IOException if an error occurred during reading
          */
-        public boolean getCD() throws IOException;
+        boolean getCD() throws IOException;
 
         /**
          * Gets the CTS (Clear To Send) bit from the underlying UART.
@@ -1281,7 +1150,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @return the current state, or {@code false} if not supported.
          * @throws IOException if an error occurred during reading
          */
-        public boolean getCTS() throws IOException;
+        boolean getCTS() throws IOException;
 
         /**
          * Gets the DSR (Data Set Ready) bit from the underlying UART.
@@ -1289,7 +1158,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @return the current state, or {@code false} if not supported.
          * @throws IOException if an error occurred during reading
          */
-        public boolean getDSR() throws IOException;
+        boolean getDSR() throws IOException;
 
         /**
          * Gets the DTR (Data Terminal Ready) bit from the underlying UART.
@@ -1297,7 +1166,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @return the current state, or {@code false} if not supported.
          * @throws IOException if an error occurred during reading
          */
-        public boolean getDTR() throws IOException;
+        boolean getDTR() throws IOException;
 
         /**
          * Sets the DTR (Data Terminal Ready) bit on the underlying UART, if
@@ -1306,7 +1175,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @param value the value to set
          * @throws IOException if an error occurred during writing
          */
-        public void setDTR(boolean value) throws IOException;
+        void setDTR(boolean value) throws IOException;
 
         /**
          * Gets the RI (Ring Indicator) bit from the underlying UART.
@@ -1314,7 +1183,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @return the current state, or {@code false} if not supported.
          * @throws IOException if an error occurred during reading
          */
-        public boolean getRI() throws IOException;
+        boolean getRI() throws IOException;
 
         /**
          * Gets the RTS (Request To Send) bit from the underlying UART.
@@ -1322,7 +1191,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @return the current state, or {@code false} if not supported.
          * @throws IOException if an error occurred during reading
          */
-        public boolean getRTS() throws IOException;
+        boolean getRTS() throws IOException;
 
         /**
          * Sets the RTS (Request To Send) bit on the underlying UART, if
@@ -1331,7 +1200,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * @param value the value to set
          * @throws IOException if an error occurred during writing
          */
-        public void setRTS(boolean value) throws IOException;
+        void setRTS(boolean value) throws IOException;
 
         /**
          * Flush non-transmitted output data and / or non-read input data
@@ -1341,7 +1210,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          * {@code false} if the operation is not supported by the driver or device
          * @throws IOException if an error occurred during flush
          */
-        public boolean purgeHwBuffers(boolean flushRX, boolean flushTX) throws IOException;
+        boolean purgeHwBuffers(boolean flushRX, boolean flushTX) throws IOException;
 
     }
 
@@ -1352,7 +1221,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          *
          * @return the device
          */
-        public UsbDevice getDevice();
+        UsbDevice getDevice();
 
         /**
          * Returns all available ports for this device. This list must have at least
@@ -1360,7 +1229,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
          *
          * @return the ports
          */
-        public List<UsbSerialPort> getPorts();
+        List<UsbSerialPort> getPorts();
     }
 
     public static class SerialInputOutputManager implements Runnable {
@@ -1394,13 +1263,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
             /**
              * Called when new incoming data is available.
              */
-            public void onNewData(byte[] data);
+            void onNewData(byte[] data);
 
             /**
              * Called when {@link SerialInputOutputManager#run()} aborts due to an
              * error.
              */
-            public void onRunError(Exception e);
+            void onRunError(Exception e);
         }
 
         /**
@@ -2154,19 +2023,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
 
     } // class UsbSerialDevice
 
-    //--------------------------------------------------------------------------------------------------
-    public interface IPassport {
-        boolean hasData();
-        String getFirstName();
-        String getLastName();
-        String getDocumentType();
-        String getDocumentNumber();
-        Date getBirthDate();
-        Date getValidityDate();
-        String getGender();
-        String getNationality();
-        String getIssuingState();
-    }
 
     public class PassportCrcException extends Exception {
         public PassportCrcException() {
@@ -2174,7 +2030,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
         }
     }
 
-    public class Passport implements IPassport {
+    public class Passport {
 
         public  static final String DOCUMENT_TYPE_PASSPORT = "P";
 
@@ -2393,13 +2249,12 @@ public class PassportScannerPlugin extends CordovaPlugin {
             return crc % 10;
         }
 
-        @SuppressLint("NewApi")
         private Date parseDate(String date) {
             if ("".equals(date)) {
                 return null;
             }
             try {
-                return new SimpleDateFormat("yyMMdd", Locale.ENGLISH).parse(date);
+                return new java.text.SimpleDateFormat("yyMMdd", Locale.ENGLISH).parse(date);
             } catch (ParseException e) {
                 return null;
             } catch (java.text.ParseException e) {
@@ -2408,19 +2263,13 @@ public class PassportScannerPlugin extends CordovaPlugin {
             return null;
         }
 
-        @SuppressLint("NewApi")
         private String parseDateString(String dateStr) {
             if ("".equals(dateStr)) {
                 return null;
             }
             try {
 
-                java.util.Date date = parseDate(dateStr);
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-                String format = formatter.format(date);
-                return format;
-
-                //return new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date).toString();
+                return new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(parseDate(dateStr));
             } catch (ParseException e) {
                 return null;
             }
@@ -2553,7 +2402,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
             {
                 //BufferedWriter for performance, true to set append to file flag
                 BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
-                buf.append(new java.text.SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
+                buf.append(new java.text.SimpleDateFormat("HH:mm:ss", Locale.ENGLISH).format(Calendar.getInstance().getTime()));
                 buf.append(" ");
                 buf.append(text);
                 buf.append("\r\n");
@@ -2583,7 +2432,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
         public void write(String text) {
             if (text != null) {
                 if (!isExtensive) {
-                    //TaxFreeApi.getInstance().getRepository().audit(text, "RefundAndroid");
                     return;
                 }
                 if (!isScheduled) {
@@ -2593,7 +2441,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         @Override
                         public void run() {
                             synchronized (this) {
-                                //TaxFreeApi.getInstance().getRepository().audit(messageBuilder.toString(), "RefundAndroid");
                                 isScheduled = false;
                                 messageBuilder = null;
                             }
@@ -2613,37 +2460,6 @@ public class PassportScannerPlugin extends CordovaPlugin {
         private boolean isExtensive;
         private boolean isScheduled;
         private StringBuilder messageBuilder;
-    }
-
-    public class FormattingHelper {
-
-        public String doubleToCurrency(double value) {
-            return String.format("%.2f", value);
-        }
-
-        public String dateToChequeString(Date date) {
-            return new java.text.SimpleDateFormat("dd/MM/yyyy").format(date);
-        }
-
-        public String dateToOsDateString(Date date) {
-            return new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(date);
-        }
-
-        public Date osDateStringToDate(String date) throws java.text.ParseException {
-            return new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date);
-        }
-
-        public String osDateStringToChequeString(String value) throws java.text.ParseException {
-            return dateToChequeString(osDateStringToDate(value));
-        }
-
-        public String fillString(int num, char character) {
-            StringBuilder b = new StringBuilder();
-            for (int i = 0; i < num; i++) {
-                b.append(character);
-            }
-            return b.toString();
-        }
     }
 
     //--------------------------------------------------------------------------------------------------
