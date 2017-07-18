@@ -195,8 +195,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                         new Runnable() {
                             public void run() {
                                 cordova.getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                                callbackContext.success(1);
-                                //callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                                //callbackContext.success(1);
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
                             }
                         });
 
