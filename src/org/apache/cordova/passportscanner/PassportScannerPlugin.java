@@ -215,8 +215,8 @@ public class PassportScannerPlugin extends CordovaPlugin {
                 return true;  // else if (action.equals(ACTION_READ_PASSPORT)
 //--------------------------------------------------------------------------------------------------
             } else if (ACTION_KEEP_AWAKE.equals(action)) {
-                //cordova.getActivity().runOnUiThread(new Runnable() {  // in Insomnia plugin https://github.com/EddyVerbruggen/Insomnia-PhoneGap-Plugin
-                cordova.getThreadPool().execute(new Runnable() {
+                cordova.getActivity().runOnUiThread(new Runnable() {  // in Insomnia plugin https://github.com/EddyVerbruggen/Insomnia-PhoneGap-Plugin
+                //cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
                             //                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);  <- in BaseActivity.onCreate() in Android app
