@@ -39,7 +39,8 @@ PassportScannerPlugin.prototype = {
         //  callback(keepUnSleep ? true : false);
         //}, function() { callback(false); }, "PassportScannerPlugin", "keepAwake", []);
 
-        cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "keepAwake", []);
+        //cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "keepAwake", []);
+        cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "keepAwake");
     },
 
     allowSleepAgain: function (successCallback, errorCallback) {
@@ -50,9 +51,10 @@ PassportScannerPlugin.prototype = {
         cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "readPassport");
     },
 
-    getPassportData: function (successCallback, errorCallback) {
-        cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "getPassportData");
-    },
+// Not used now
+//    getPassportData: function (successCallback, errorCallback) {
+//        cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "getPassportData");
+//    },
 
 //  isPassportInSlot: function (callback) {
 //    cordova.exec(function (devFound) {
