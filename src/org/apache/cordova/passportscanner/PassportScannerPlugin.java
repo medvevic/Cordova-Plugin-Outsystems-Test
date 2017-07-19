@@ -25,6 +25,7 @@ import android.os.Build;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import org.apache.cordova.CallbackContext;
@@ -154,6 +155,10 @@ public class PassportScannerPlugin extends CordovaPlugin {
     private static final String ACTION_READ_PASSPORT = "readPassport";
     private static final String ACTION_GET_PASSPORT_DATA = "getPassportData";
     private static final String ACTION_IS_PASSPORT_IN_SLOT = "isPassportInSlot";
+
+    private static final String ACTION_KEEP_AWAKE = "keepAwake";
+    private static final String ACTION_ALLOW_SLEEP_AGAIN = "allowSleepAgain";
+
     private Passport passport;
     String errorKey = "NotPassport";
     String errorDescription = "Document type is not passport";
@@ -165,10 +170,11 @@ public class PassportScannerPlugin extends CordovaPlugin {
         this.openCallbackContext = callbackContext;
 
         try {
+//--------------------------------------------------------------------------------------------------
             if (action.equals(ACTION_AVAILABLE)) { //} else if ("available".equals(action)) {
                 openCallbackContext.success(1);
                 return true;  // else if (action.equals(ACTION_AVAILABLE)
-
+//--------------------------------------------------------------------------------------------------
             } else if (action.equals(ACTION_FIND_DEVICES)) {   //    "isDeviceFound".equals(action)
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -181,7 +187,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                 });
                 return true;  // else if (action.equals(ACTION_FIND_DEVICES)
-
+//--------------------------------------------------------------------------------------------------
             } else if (action.equals(ACTION_READ_PASSPORT)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -207,7 +213,45 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                 });
                 return true;  // else if (action.equals(ACTION_READ_PASSPORT)
-
+//--------------------------------------------------------------------------------------------------
+            } else if (ACTION_KEEP_AWAKE.equals(action)) {
+                //cordova.getActivity().runOnUiThread(new Runnable() {  // in Insomnia plugin https://github.com/EddyVerbruggen/Insomnia-PhoneGap-Plugin
+                cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        try {
+                            //                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);  <- in BaseActivity.onCreate() in Android app
+                            cordova.getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                            PluginResult pr = new PluginResult(PluginResult.Status.OK);
+                            callbackContext.success(pr.toString());
+                            //callbackContext.success(1);
+                            //callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                        } catch (Exception e) {
+                            openCallbackContext.error("Error. PassportScannerPlugin -> keepAwake : " + e.getMessage()); //
+                        }
+                    }
+                });
+                return true; // ACTION_KEEP_AWAKE
+/*
+                cordova.getActivity().runOnUiThread(new Runnable() {
+                            public void run() {
+                                cordova.getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                //callbackContext.success(1);
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                            }
+                        });
+                return true; // ACTION_KEEP_AWAKE
+*/
+//--------------------------------------------------------------------------------------------------
+            } else if (ACTION_ALLOW_SLEEP_AGAIN.equals(action)) {
+                cordova.getActivity().runOnUiThread(
+                        new Runnable() {
+                            public void run() {
+                                cordova.getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                            }
+                        });
+                return true; // ACTION_ALLOW_SLEEP_AGAIN
+//--------------------------------------------------------------------------------------------------
             } else if (action.equals(ACTION_GET_PASSPORT_DATA)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -236,7 +280,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                 });
                 return true;  // else if (action.equals(ACTION_GET_PASSPORT_DATA)
-
+//--------------------------------------------------------------------------------------------------
             } else if (action.equals(ACTION_IS_PASSPORT_IN_SLOT)) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
@@ -260,7 +304,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                     }
                 });
                 return true;  // else if (action.equals(ACTION_IS_PASSPORT_IN_SLOT)
-
+//--------------------------------------------------------------------------------------------------
             } // if (action.equals(ACTION_AVAILABLE
         } catch (Throwable e) {
             return false;
