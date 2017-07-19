@@ -147,7 +147,7 @@ public class PassportScannerPlugin extends CordovaPlugin {
                                     //callbackContext.success(1);
                                     //callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
                                 } catch (Exception e) {
-                                    openCallbackContext.error("Error. PassportScannerPlugin -> keepAwake : " + e.getMessage()); //
+                                    openCallbackContext.error("Error. PassportScannerPlugin -> keepAwake : " + e.getMessage());
                                 }
                             }
                         });

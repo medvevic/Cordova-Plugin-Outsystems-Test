@@ -39,7 +39,6 @@ PassportScannerPlugin.prototype = {
         //  callback(keepUnSleep ? true : false);
         //}, function() { callback(false); }, "PassportScannerPlugin", "keepAwake", []);
 
-        //cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "keepAwake", []);
         cordova.exec(successCallback, errorCallback, "PassportScannerPlugin", "keepAwake");
     },
 
